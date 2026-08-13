@@ -20,9 +20,9 @@ A IA foi utilizada como ferramenta de apoio para:
 
 ## [Feature] Configuração do Banco de Dados PostgreSQL (Docker & Env)
 - **Branch**: `feature/postgres-setup`
-- **Prompt**: "Definição do serviço PostgreSQL 17 via Docker Compose, suporte a charset UTF-8, parametrização por .env/.env.example e validação do status healthy."
+- **Prompt**: "Definição do serviço PostgreSQL 17 via Docker Compose, suporte a charset UTF-8, parametrização por .env/.env.example, criação do script init-db.sql e validação do status healthy."
 - **Contexto & Decisão**:
   - Escolhida a imagem `postgres:17-alpine` por ser leve, segura e estável.
-  - Garantida a inicialização em `UTF8` para suporte completo a caracteres especiais e acentuação nos dados financeiros e cadastrais.
+  - Criado o script de inicialização `infra/database/init-db.sql` mapeado no volume do Docker para garantir a criação automática do banco `credit_engine_db` com `ENCODING = 'UTF8'` e `LC_COLLATE = 'pt_BR.UTF-8'`, assegurando suporte completo a acentuação e dados financeiros.
   - Implementado padrão de variáveis de ambiente com `.env.example` versionado e `.env` no `.gitignore`.
   - Configurado `healthcheck` no container para garantir que a base esteja pronta antes dos testes e das migrações da aplicação Spring.
