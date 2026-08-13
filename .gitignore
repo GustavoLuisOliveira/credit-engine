@@ -17,7 +17,7 @@ Thumbs.db
 # Java
 # =========================
 
-backend/target/
+credit-engine-api/target/
 *.class
 
 # =========================
