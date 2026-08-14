@@ -1,6 +1,6 @@
 package com.credit.engine.domain.model.currency;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -12,11 +12,11 @@ public class Currency {
     private final String code;
     private String name;
     private String symbol;
-    private final OffsetDateTime createdAt;
-    private final OffsetDateTime updatedAt;
+    private final Instant createdAt;
+    private final Instant updatedAt;
 
 
-    private Currency(String code, String name, String symbol, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    private Currency(String code, String name, String symbol, Instant createdAt, Instant updatedAt) {
         this.code = code;
         this.name = Objects.requireNonNull(name, "name é obrigatório");
         this.symbol = Objects.requireNonNull(symbol, "symbol é obrigatório");
@@ -31,7 +31,7 @@ public class Currency {
     }
 
     /** Reidrata uma moeda já persistida, sem revalidar o código. */
-    public static Currency restore(String code, String name, String symbol, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public static Currency restore(String code, String name, String symbol, Instant createdAt, Instant updatedAt) {
         return new Currency(code, name, symbol, createdAt, updatedAt);
     }
 
@@ -59,11 +59,11 @@ public class Currency {
         return symbol;
     }
 
-    public OffsetDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public OffsetDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 

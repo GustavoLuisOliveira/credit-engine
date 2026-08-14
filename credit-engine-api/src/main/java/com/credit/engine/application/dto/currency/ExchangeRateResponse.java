@@ -3,7 +3,7 @@ package com.credit.engine.application.dto.currency;
 import com.credit.engine.domain.model.currency.ExchangeRate;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public record ExchangeRateResponse(
@@ -11,9 +11,9 @@ public record ExchangeRateResponse(
         String originCurrencyCode,
         String destinationCurrencyCode,
         BigDecimal rate,
-        OffsetDateTime rateDateTime,
-        OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        Instant rateDateTime,
+        Instant createdAt,
+        Instant updatedAt
 ) {
     public static ExchangeRateResponse toResponse(ExchangeRate domain) {
         return new ExchangeRateResponse(

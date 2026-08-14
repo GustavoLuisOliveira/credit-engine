@@ -3,7 +3,7 @@ package com.credit.engine.domain.model.currency;
 import com.credit.engine.domain.shared.entity.BaseDomainModel;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -16,9 +16,9 @@ public class ExchangeRate extends BaseDomainModel {
     private final String originCurrencyCode;
     private final String destinationCurrencyCode;
     private final BigDecimal rate;
-    private final OffsetDateTime rateDateTime;
+    private final Instant rateDateTime;
 
-    private ExchangeRate(UUID id, String originCurrencyCode, String destinationCurrencyCode, BigDecimal rate, OffsetDateTime rateDateTime, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    private ExchangeRate(UUID id, String originCurrencyCode, String destinationCurrencyCode, BigDecimal rate, Instant rateDateTime, Instant createdAt, Instant updatedAt) {
         super(id, createdAt, updatedAt);
         this.originCurrencyCode = Objects.requireNonNull(originCurrencyCode, "originCurrencyCode é obrigatório").toUpperCase();
         this.destinationCurrencyCode = Objects.requireNonNull(destinationCurrencyCode, "destinationCurrencyCode é obrigatório").toUpperCase();
@@ -27,11 +27,11 @@ public class ExchangeRate extends BaseDomainModel {
         this.rateDateTime = Objects.requireNonNull(rateDateTime, "rateDateTime é obrigatório");
     }
 
-    public static ExchangeRate create(String originCurrencyCode, String destinationCurrencyCode, BigDecimal rate, OffsetDateTime rateDateTime) {
+    public static ExchangeRate create(String originCurrencyCode, String destinationCurrencyCode, BigDecimal rate, Instant rateDateTime) {
         return new ExchangeRate(null, originCurrencyCode, destinationCurrencyCode, rate, rateDateTime, null, null);
     }
 
-    public static ExchangeRate restore(UUID id, String originCurrencyCode, String destinationCurrencyCode, BigDecimal rate, OffsetDateTime rateDateTime, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public static ExchangeRate restore(UUID id, String originCurrencyCode, String destinationCurrencyCode, BigDecimal rate, Instant rateDateTime, Instant createdAt, Instant updatedAt) {
         return new ExchangeRate(id, originCurrencyCode, destinationCurrencyCode, rate, rateDateTime, createdAt, updatedAt);
     }
 
@@ -66,7 +66,7 @@ public class ExchangeRate extends BaseDomainModel {
         return rate;
     }
 
-    public OffsetDateTime getRateDateTime() {
+    public Instant getRateDateTime() {
         return rateDateTime;
     }
 

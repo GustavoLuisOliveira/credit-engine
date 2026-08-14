@@ -6,6 +6,7 @@ ao desenvolvimento.
 ## Ferramentas utilizadas
 
 - ChatGPT
+- Gemini
 
 ## Objetivo do uso
 
@@ -55,3 +56,18 @@ A IA foi utilizada como ferramenta de apoio para:
   - **Testes Unitários (JUnit 5, AssertJ & Mockito)**:
     - Estruturados testes de domínio e serviço no padrão **AAA** (Arrange, Act, Assert) com anotações `@DisplayName` explicativas.
     - Utilizado Mockito (`@Mock`, `@ExtendWith(MockitoExtension.class)`) e `thenAnswer` para isolamento total da camada de persistência.
+  - **Ajustes de Ambiente e Inicialização do Banco de Dados**:
+    - Ajustado o script `infra/database/init-db.sql` para utilizar a collation `en_US.utf8` (compatível com o `template1` da imagem `postgres:17`), corrigindo o erro de inicialização do container.
+    - Removida a declaração de `POSTGRES_DB` do `docker-compose.yml` para evitar conflito de execução e erro de banco existente (`database already exists`) ao executar o script inicial.
+    - Ajustado o `healthcheck` do container no Compose para consultar a base padrão `postgres`, garantindo a validação da saúde do serviço durante a subida dos containers.
+    - Atualizada a especificação do `docker-compose.yml` (remoção da propriedade obsoleta `version`).
+  - **Padronização de Timezone & Serialização no Spring Boot**:
+    - Migrados todos os tipos de data/hora do projeto de `OffsetDateTime` para `Instant`, garantindo o armazenamento de timestamp absoluto e imutável em UTC em toda a camada de domínio e persistência.
+    - Configurado o fuso horário padrão da JVM para `America/Sao_Paulo` via `@PostConstruct` na classe `CreditEngineApiApplication`.
+    - Implementado `InstantSerializer` customizado estendendo `StdSerializer<Instant>` da API Jackson 3 (`tools.jackson`), aplicando a formatação `DateTimeFormatter.ISO_OFFSET_DATE_TIME` ajustada explicitamente para a zona `America/Sao_Paulo`.
+    - Registrado o módulo `SimpleModule` no contexto do Spring (`JacksonConfig`) para aplicar automaticamente a formatação do tipo `Instant` em toda a API.
+    - Parametrizado `spring.jackson.time-zone=America/Sao_Paulo` no `application.properties` para alinhar as definições globais do framework.
+  - **Documentação e Interface Interativa (Swagger/OpenAPI)**:
+    - Configurada a integração do SpringDoc OpenAPI (`springdoc-openapi-starter-webmvc-ui`) no `application.properties`.
+    - Mapeadas as rotas personalizadas da documentação (`/v3/api-docs`) e da interface do Swagger UI (`/swagger-ui.html`).
+    - Ativada a ordenação por método HTTP e alfabética por tags para facilitar a navegação e testes de integração dos endpoints.

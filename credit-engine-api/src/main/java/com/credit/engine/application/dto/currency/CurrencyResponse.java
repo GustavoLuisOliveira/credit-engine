@@ -2,14 +2,14 @@ package com.credit.engine.application.dto.currency;
 
 import com.credit.engine.domain.model.currency.Currency;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 public record CurrencyResponse(
         String code,
         String name,
         String symbol,
-        OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        Instant createdAt,
+        Instant updatedAt
 ) {
 
     public static CurrencyResponse toResponse(Currency domain) {

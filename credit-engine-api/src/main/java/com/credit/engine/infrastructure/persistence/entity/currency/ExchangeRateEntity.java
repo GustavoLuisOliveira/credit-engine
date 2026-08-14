@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 /**
  * Entidade JPA de ExchangeRate. Mapeamento puro para a tabela `exchange_rate`.
@@ -30,9 +30,9 @@ public class ExchangeRateEntity extends BaseEntity {
     private BigDecimal rate;
 
     @Column(name = "rate_date_time", nullable = false)
-    private OffsetDateTime rateDateTime;
+    private Instant rateDateTime;
 
-    public ExchangeRateEntity(String originCurrencyId, String destinationCurrencyId, BigDecimal rate, OffsetDateTime rateDateTime) {
+    public ExchangeRateEntity(String originCurrencyId, String destinationCurrencyId, BigDecimal rate, Instant rateDateTime) {
         this.originCurrencyId = originCurrencyId;
         this.destinationCurrencyId = destinationCurrencyId;
         this.rate = rate;

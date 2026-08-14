@@ -3,7 +3,7 @@ package com.credit.engine.application.dto.currency;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 public record ExchangeRateRequest(
         @NotBlank(message = "O código da moeda de origem é obrigatório.")
@@ -20,6 +20,6 @@ public record ExchangeRateRequest(
 
         @NotNull(message = "A data/hora da cotação é obrigatória.")
         @PastOrPresent(message = "A data/hora da cotação não pode estar no futuro.")
-        OffsetDateTime rateDateTime
+        Instant rateDateTime
 ) {
 }

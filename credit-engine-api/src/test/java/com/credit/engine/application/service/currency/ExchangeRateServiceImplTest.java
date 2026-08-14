@@ -15,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,7 +51,7 @@ class ExchangeRateServiceImplTest {
     @DisplayName("Deve cadastrar uma nova taxa de câmbio com sucesso quando as moedas de origem e destino existirem")
     void shouldCreateExchangeRateWhenBothCurrenciesExist() {
         // Configura os dados de entrada e mocka a existência das duas moedas
-        ExchangeRateRequest request = new ExchangeRateRequest("USD", "BRL", new BigDecimal("5.20"), OffsetDateTime.now());
+        ExchangeRateRequest request = new ExchangeRateRequest("USD", "BRL", new BigDecimal("5.20"), Instant.now());
         when(currencyRepository.existsById("USD")).thenReturn(true);
         when(currencyRepository.existsById("BRL")).thenReturn(true);
         when(exchangeRateRepository.save(any(ExchangeRateEntity.class)))
@@ -73,7 +73,7 @@ class ExchangeRateServiceImplTest {
     @DisplayName("Deve rejeitar a criação de taxa de câmbio quando a moeda de origem não existir no sistema")
     void shouldRejectExchangeRateWhenOriginCurrencyDoesNotExist() {
         // Simula a ausência da moeda de origem no banco de dados
-        ExchangeRateRequest request = new ExchangeRateRequest("XXX", "BRL", new BigDecimal("5.20"), OffsetDateTime.now());
+        ExchangeRateRequest request = new ExchangeRateRequest("XXX", "BRL", new BigDecimal("5.20"), Instant.now());
         when(currencyRepository.existsById("XXX")).thenReturn(false);
 
         // Garante que DomainNotFoundException seja lançada e impede o salvamento no repositório
@@ -87,7 +87,7 @@ class ExchangeRateServiceImplTest {
     @DisplayName("Deve buscar e retornar a taxa de câmbio mais recente para o par de moedas solicitado")
     void shouldReturnLatestRateForPair() {
         // Mocka o repositório para devolver a cotação mais recente encontrada
-        ExchangeRateEntity entity = new ExchangeRateEntity("USD", "BRL", new BigDecimal("5.20"), OffsetDateTime.now());
+        ExchangeRateEntity entity = new ExchangeRateEntity("USD", "BRL", new BigDecimal("5.20"), Instant.now());
         when(exchangeRateRepository
                 .findFirstByOriginCurrencyIdAndDestinationCurrencyIdOrderByRateDateTimeDesc("USD", "BRL"))
                 .thenReturn(Optional.of(entity));

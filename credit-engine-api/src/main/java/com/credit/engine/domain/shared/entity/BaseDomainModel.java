@@ -1,15 +1,15 @@
 package com.credit.engine.domain.shared.entity;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public abstract class BaseDomainModel {
 
     private final UUID id;
-    private final OffsetDateTime createdAt;
-    private final OffsetDateTime updatedAt;
+    private final Instant createdAt;
+    private final Instant updatedAt;
 
-    protected BaseDomainModel(UUID id, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    protected BaseDomainModel(UUID id, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -19,11 +19,11 @@ public abstract class BaseDomainModel {
         return id;
     }
 
-    public OffsetDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public OffsetDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 }
