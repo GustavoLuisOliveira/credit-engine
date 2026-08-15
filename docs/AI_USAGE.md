@@ -150,3 +150,44 @@ A IA foi utilizada como ferramenta de apoio para:
     - Testes de `Money` e `Receivable` (domínio puro) cobrindo validação de invariantes e transições de estado inválidas.
     - Estruturada `ReceivableServiceImplTest` com organização em classes internas `@Nested`: `CreateTests`, `UpdateTests`, `FindByIdTests`, `FindByAssignorTests`.
     - Aplicada `@DisplayName` em todos os cenários para relatórios legíveis na IDE/CI-CD.
+
+---
+
+### [Feature] Motor de Precificação (Pricing Engine, Strategy Pattern)
+- **Branch**: `feature/pricing-engine`
+- **Prompts estratégicos utilizados**:
+  - "Definição de ordem de implementação entre `pricing` e `settlement`, avaliando qual depende de qual antes de começar a codificar."
+  - "Adição de comentários e exemplos de uso no método `calculate()` de `AbstractPricingStrategy`, cobrindo os dois `ReceivableType` suportados (Duplicata Mercantil e Cheque Pré-datado)."
+  - "Adição de regra de negócio: prazo mínimo de 1 dia entre liquidação e vencimento, para garantir que o spread de risco seja de fato aplicado (evitar operação sem lucro)."
+  - "Extensão da simulação de precificação (`PricingCalculationService.simulate`) para suportar conversão cambial opcional."
+  - "Discussão e iteração sobre onde converter `baseRate`/`spreadRate` entre formato percentual (como digitado pelo operador) e fração decimal (como a fórmula de deságio exige), avaliadas três abordagens antes de fechar a definitiva."
+  - "Geração da suíte de testes unitários (JUnit5 + Mockito + AssertJ) para `AbstractPricingStrategy`, `PricingParameter`, `PricingStrategyResolver` e `PricingCalculationServiceImpl`, cobrindo os cenários de negócio e os de erro."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **Local de conversão percentual → fração decimal, revisado três vezes**: a primeira proposta da IA converteu na borda HTTP (`PricingParameterRequest`/`Response`), mantendo `PricingParameter` em fração. A segunda tentativa moveu a conversão para dentro do `AbstractPricingStrategy` (a pedido do desenvolvedor, para permitir que o operador sempre envie percentual e o banco armazene assim). Após reavaliação conjunta, a decisão final foi armazenar `baseRate`/`spreadRate` como percentual em `PricingParameter` (mesmo formato do banco) e criar os métodos `baseRateAsFraction()`/`spreadRateAsFraction()` no próprio domínio, mantendo o `AbstractPricingStrategy` puro (sempre fração) e sem depender de quem o chama saber fazer a conversão. Isso evita duplicar o `/100` no futuro `SettlementService`.
+  - **Inconsistência de formato entre `PricingSimulationResponse` e `PricingParameterResponse`**: a primeira versão do `PricingCalculationServiceImpl` devolvia `result.getBaseRate()`/`getSpreadRate()` (fração, formato interno do cálculo) na resposta da simulação, enquanto o CRUD de parâmetros devolvia percentual, inconsistência identificada e corrigida trocando para `parameter.getBaseRate()`/`getSpreadRate()` (percentual, mesmo formato em toda a API).
+  - **Teste desatualizado após regra de prazo mínimo**: `shouldReturnFaceValueAsPresentValueWhenTermIsZero` assumia que prazo zero era válido (presentValue = faceValue). Após a nova regra de negócio, esse cenário passou a lançar exceção, o teste foi reescrito (`shouldRejectSameDaySettlement`) e um novo teste foi adicionado (`shouldApplyDiscountForMinimumOneDayTerm`, prazo de exatamente 1 dia).
+  - **Nomes de parâmetro ambíguos**: `calculate(Receivable, BigDecimal baseRate, BigDecimal spreadRate, LocalDate)` não deixava claro se o valor esperado era fração ou percentual, fonte de pelo menos dois bugs de teste ao longo da feature. Renomeado para `baseRateFraction`/`spreadRateFraction` na interface `PricingStrategy` e na implementação, tornando o contrato autoexplicativo.
+- **Análise crítica**:
+  - **Onde economizou tempo**: geração de boilerplate de testes (cenários de sucesso/erro, mocks, `@DisplayName`), e o cálculo manual dos valores esperados de deságio para os casos de teste.
+  - **Onde exigiu atenção humana**: a decisão de arquitetura sobre formato percentual vs. fração exigiu três rodadas de discussão, a IA sugeriu inicialmente conversão na borda HTTP, mas o desenvolvedor preferiu manter o dado bruto do banco em percentual (mais legível em consulta SQL direta) e isolar a conversão matemática no domínio. Sem esse direcionamento explícito, a IA teria deixado a conversão espalhada entre DTO e service, criando um ponto a mais de duplicação quando `Settlement` for implementado.
+  
+    O teste original de `AbstractPricingStrategy` tratava prazo zero como caso válido (presentValue = faceValue, sem desconto). Apontei que isso permitia uma operação sem lucro para a mesa: com prazo zero, o fator de desconto é neutro `(1+totalRate)^0 = 1`, então o spread de risco nunca chega a ser efetivamente cobrado. A IA implementou a validação (prazo mínimo de 1 dia) e ajustou os testes a partir desse direcionamento.
+- **Contexto & Decisão**:
+  - **Domínio & Regras de Negócio**:
+    - Criado `PricingStrategy` (interface) + `AbstractPricingStrategy` (Template Method com a fórmula de deságio) + `CommercialInvoicePricingStrategy`/`PostDatedCheckPricingStrategy` + `PricingStrategyResolver` (dispatch por `ReceivableType`, injeção da `List<PricingStrategy>` via Spring).
+    - `AbstractPricingStrategy.calculate()` recebe `baseRateFraction`/`spreadRateFraction` já em fração decimal.
+    - Regra de negócio adicionada: prazo entre `settlementDate` e `dueDate` deve ser de, no mínimo, 1 dia, cobrindo tanto recebível já vencido quanto vencimento na própria data de liquidação, já que em ambos os casos o fator de desconto seria neutro e o spread de risco nunca seria de fato cobrado.
+    - `PricingParameter` (domínio) armazena `baseRate`/`spreadRate` em formato percentual (mesmo formato do `pricing_parameter` no banco) e expõe `baseRateAsFraction()`/`spreadRateAsFraction()` para conversão sob demanda, único ponto de conversão do sistema, reutilizável por qualquer consumidor futuro (`PricingCalculationService`, e futuramente `SettlementService`).
+  - **Mapeamento JPA & Persistência**:
+    - `PricingParameter` (entidade), `PricingParameterRepository` com `findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc` (busca a taxa vigente numa data de referência) e `findByReceivableTypeOrderByEffectiveDateDesc` (histórico).
+    - Migration `V5__create_pricing_parameter_schema.sql`: tabela append-only (todas as colunas `updatable = false`), sem FK (o `receivable_type` é um enum fechado do domínio, validado via `CHECK` constraint), índice composto `(receivable_type, effective_date DESC)` para a busca de taxa vigente.
+  - **DTOs & Camada de Aplicação**:
+    - `PricingParameterRequest`/`Response`: `baseRate`/`spreadRate` em percentual, validados com `@DecimalMin`/`@DecimalMax` (0 a 100).
+    - `PricingSimulationResponse` estendido com `targetCurrencyCode`, `exchangeRateUsed` e `convertedAmount` (todos `null` quando não há conversão cambial), mantendo o mesmo formato percentual do `PricingParameterResponse` para `baseRate`/`spreadRate`.
+    - `PricingCalculationServiceImpl.simulate()` passou a aceitar `targetCurrencyCode` opcional: quando informado e diferente da moeda original do título, consulta `ExchangeRateService.findLatestRate(...)` e converte o `presentValue` (já com deságio) para a moeda alvo. A conversão cambial é sempre aplicada depois do cálculo de deságio, nunca misturada com ele, conforme já definido na arquitetura de domínio.
+    - Avaliada e descartada a alternativa de expor um `findDomainById` na interface pública `ReceivableService` para reaproveitar em `PricingCalculationServiceImpl`, mantido o acesso direto via `ReceivableRepository` + `ReceivableMapper`, já que não há regra de negócio nova a centralizar e a interface pública do service deve permanecer 100% DTO-oriented (contrato consumido pelo controller).
+  - **Testes Unitários (JUnit 5, AssertJ & Mockito)**:
+    - `AbstractPricingStrategy`/`CommercialInvoicePricingStrategyTest`: cenários de deságio para prazo de 1 mês, rejeição de prazo zero e de recebível vencido, e caso de borda no prazo mínimo válido (1 dia).
+    - `PricingParameterTest`: validação de `totalRate()`, `baseRateAsFraction()`/`spreadRateAsFraction()`, e rejeição de taxas negativas/tipo nulo.
+    - `PricingStrategyResolverTest`: resolução correta por `ReceivableType` e exceção quando não há estratégia registrada.
+    - `PricingCalculationServiceImplTest`: simulação sem conversão cambial, sem conversão quando moeda alvo é igual à original, com conversão cambial aplicada sobre o valor presente, resolução da estratégia correta para `POST_DATED_CHECK` (prova que o resolver não "vaza" para a estratégia errada), e os dois cenários de exceção (recebível não encontrado / parâmetro de precificação não configurado).
