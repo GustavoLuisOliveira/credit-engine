@@ -2,6 +2,7 @@ package com.credit.engine.web.handler;
 
 import com.credit.engine.domain.shared.exception.DomainConflictException;
 import com.credit.engine.domain.shared.exception.DomainNotFoundException;
+import com.credit.engine.domain.shared.exception.InvalidCnpjException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -20,6 +21,11 @@ import java.util.Map;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(InvalidCnpjException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidCnpj(InvalidCnpjException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 
     @ExceptionHandler(DomainNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(DomainNotFoundException ex) {

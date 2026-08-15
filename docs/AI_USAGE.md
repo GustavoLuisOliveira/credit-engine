@@ -80,3 +80,37 @@ A IA foi utilizada como ferramenta de apoio para:
     - Configurada a integração do SpringDoc OpenAPI (`springdoc-openapi-starter-webmvc-ui`) no `application.properties`.
     - Mapeadas as rotas personalizadas da documentação (`/v3/api-docs`) e da interface do Swagger UI (`/swagger-ui.html`).
     - Ativada a ordenação por método HTTP e alfabética por tags para facilitar a navegação e testes de integração dos endpoints.
+
+---
+
+### [Feature] Módulo de Gerenciamento de Cedentes (Assignor)
+- **Branch**: `feature/assignor-context`
+- **Prompts estratégicos utilizados**:
+  - "Criação, mapeamento JPA, isolamento de domínio e testes unitários do módulo de cedentes (Assignor) respeitando DDD, Clean Architecture e convenção de pacotes."
+  - "Refatoração e documentação de testes unitários do Value Object Cnpj e da camada de serviço AssignorServiceImpl utilizando JUnit 5 (@DisplayName, @Nested, @ParameterizedTest), AssertJ e Mockito."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **Bug no método `update` da Service**: Inicialmente a IA retornava a entidade desatualizada (`entity` carregada do banco antes das modificações) em vez do estado persistido (`saved`), fazendo com que o DTO de resposta ignorasse as alterações de `name`, `email` e `phone`. Foi corrigido para reidratar e retornar o objeto recém-salvo.
+  - **Violação do encapsulamento de Domínio no `update`**: A IA tentou usar um construtor estático genérico que permitia alterar o CNPJ. Foi corrigido criando o método de instância `currentAssignor.update(...)`, garantindo que o `documentNumber` seja mantido e o `updatedAt` seja atualizado.
+  - **Mapeamento de exceções e acoplamento**: O Service chamava a entidade JPA (`AssignorEntity`) em métodos auxiliares. A estrutura foi refatorada para expor apenas o modelo de domínio (`Assignor`) na camada de aplicação e utilizar a exceção de domínio `DomainConflictException` ao tentar alterar o CNPJ.
+- **Análise crítica**:
+  - **Onde economizou tempo**: Agilizou a escrita de boilerplates (DTOs Records, mapeamentos bidirecionais, JPA Annotations e anotações do Lombok), além da criação rápida do algoritmo de validação e testes do Value Object `Cnpj`.
+  - **Onde exigiu atenção humana**: Garantir o isolamento estrito entre a entidade JPA (`AssignorEntity`) e o Modelo de Domínio (`Assignor`), assegurar a preservação dos dados de auditoria durante atualizações, criar a função `findDomainById` para evitar código duplicado e padronizar as mensagens/anotações dos testes do JUnit 5 com `@DisplayName` legível.
+- **Contexto & Decisão**:
+  - **Domínio & Regras de Negócio**:
+    - Criado o Value Object `Cnpj` com validação de formato, Módulo 11 (dígitos verificadores), rejeição de sequências de dígitos repetidos/inválidos, formatação automática e imutabilidade.
+    - Criado o modelo de domínio `Assignor` com construtor privado, métodos de fábrica estáticos (`create`, `restore`) e método de instância para atualização (`update`), encapsulando a regra de negócio que proíbe a alteração do CNPJ após o cadastro.
+  - **Mapeamento JPA & Persistência**:
+    - Criada a classe `AssignorEntity` estendendo `BaseEntity` e `BaseAuditEntity`, mapeando a tabela `assignor` com restrição de unicidade (`uq_assignor_document_number`).
+    - Ajustado o nível de acesso dos setters de auditoria para `PROTECTED` em `BaseAuditEntity` para viabilizar a atualização de `updateAt` do domínio.
+  - **DTOs & Camada de Aplicação**:
+    - Criado o record `AssignorRequest` para transporte dos dados de entrada.
+    - Criado o record `AssignorResponse` utilizando o método de fábrica declarativo `AssignorResponse.toResponse(assignor)` para conversão a partir do modelo de domínio, expondo o CNPJ formatado via mascara.
+  - **Camada de Serviço (`AssignorServiceImpl`)**:
+    - Configurado `@Transactional(readOnly = true)` na classe e `@Transactional` nos métodos de escrita (`create` e `update`).
+    - Implementada checagem prévia de duplicidade com `existsByDocumentNumber` lançando `DomainConflictException`.
+    - Isolada a manipulação de dados para usar apenas o modelo de domínio `Assignor` através do helper privado `findDomainById`.
+  - **Testes Unitários (JUnit 5, AssertJ & Mockito)**:
+    - Criados testes exaustivos para o Value Object `CnpjTest` utilizando `@ParameterizedTest` e `@ValueSource` para validação de bordas e sequências inválidas.
+    - Estruturada a classe de testes de serviço `AssignorServiceImplTest` com organização em classes internas anotadas com `@Nested` (`CreateTests`, `UpdateTests`, `FindByIdTests`, `FindByDocumentNumberTests`).
+    - Aplicada a anotação `@DisplayName` em todos os cenários para geração de relatórios limpos e rastreáveis na IDE/CI-CD.
+    - Utilizado `ArgumentCaptor` do Mockito para validar o estado exato dos objetos de domínio enviados para persistência durante as operações de atualização.
