@@ -20,7 +20,7 @@ A IA foi utilizada como ferramenta de apoio para:
 
 ## Registro de utilização
 
-## [Feature] Configuração do Banco de Dados PostgreSQL (Docker & Env)
+### [Feature] Configuração do Banco de Dados PostgreSQL (Docker & Env)
 - **Branch**: `feature/postgres-setup`
 - **Prompt**: "Definição do serviço PostgreSQL 17 via Docker Compose, suporte a charset UTF-8, parametrização por .env/.env.example, criação do script init-db.sql e validação do status healthy."
 - **Contexto & Decisão**:
@@ -114,3 +114,39 @@ A IA foi utilizada como ferramenta de apoio para:
     - Estruturada a classe de testes de serviço `AssignorServiceImplTest` com organização em classes internas anotadas com `@Nested` (`CreateTests`, `UpdateTests`, `FindByIdTests`, `FindByDocumentNumberTests`).
     - Aplicada a anotação `@DisplayName` em todos os cenários para geração de relatórios limpos e rastreáveis na IDE/CI-CD.
     - Utilizado `ArgumentCaptor` do Mockito para validar o estado exato dos objetos de domínio enviados para persistência durante as operações de atualização.
+
+---
+
+### [Feature] Módulo de Gerenciamento de Títulos (Receivable)
+- **Branch**: `feature/receivable-context`
+- **Prompts estratégicos utilizados**:
+  - "Criação da vertical slice completa (domain → infrastructure → application → web) do módulo de títulos, usando a slice já implementada de `currency` como referência de convenção de código."
+  - "Criação do Value Object `Money` (domain.shared), compartilhado entre `Receivable`, `Settlement` e `SettlementItem`, sem acoplar o VO ao contexto `currency`."
+  - "Criação do método `update` de `ReceivableServiceImpl`, usando como base o `update` já implementado em `AssignorServiceImpl` (mesmo padrão de buscar o domínio atual, validar campos imutáveis, aplicar `update()` de instância, persistir)."
+  - "Adição de testes unitários para `Money`, `Receivable` e `ReceivableServiceImpl`."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **Design inicial do `Money` divergia do padrão real do projeto**: a primeira versão referenciava o objeto `Currency` diretamente e usava uma exceção de domínio própria (`InvalidMoneyException`). Corrigido após inspeção do código de `currency` já implementado `Money` passou a referenciar a moeda por código `String` (mesmo padrão de `ExchangeRate.originCurrencyCode`) e a usar `IllegalArgumentException`/`NullPointerException` na validação, em vez de exceção própria.
+  - **Bug no `Receivable.restore()`**: a IA validava `id` como não-nulo (`Objects.requireNonNull`). Isso quebrava com `NullPointerException` em testes que usam `save()` mockado retornando a própria entidade recém-construída (sem `id`, já que este só é atribuído pelo Hibernate no INSERT real). Corrigido removendo a validação de `id`, mantendo apenas a de `status`.
+  - **Duplicação de validação de código de moeda**: a lógica de validar/normalizar código ISO 4217 estava repetida em `Currency` e `Money`. Extraída para `domain.shared.currency.CurrencyCodeValidator`.
+  - **Endpoint de listagem sobrecarregado**: `findAll` inicialmente decidia entre listar tudo ou filtrar por cedente usando um `if` sobre um `@RequestParam(required = false)`. Refatorado para dois métodos explícitos (`findAll` e `findByAssignor`), usando `@GetMapping(params = "assignorId")` para desambiguar a rota no Spring, deixando a obrigatoriedade do parâmetro explícita na assinatura em vez de escondida num `if`.
+- **Análise crítica**:
+  - **Onde economizou tempo**: Agilizou a escrita de boilerplates (DTOs Records, mapeamentos bidirecionais, JPA Annotations e anotações do Lombok), além da criação rápida do algoritmo de validação e testes do Value Object `Money`.
+  - **Onde exigiu atenção humana**: Garantir que o `update()` do domínio protegesse a invariante de status (`UNSETTLED`).
+- **Contexto & Decisão**:
+  - **Domínio & Regras de Negócio**:
+    - Criado o Value Object `Money` (`domain.shared.money`), encapsulando `BigDecimal` + código de moeda, com escala fixa em 4 casas decimais e operações (`add`, `subtract`) que exigem mesma moeda.
+    - Criado o modelo de domínio `Receivable` com construtor privado, fábricas estáticas (`create`, `restore`) e métodos de instância para transição de estado (`markAsSettled`, `cancel`) e atualização (`update`), este último protegendo a invariante de que só um título `UNSETTLED` pode ser editado.
+    - Extraído `CurrencyCodeValidator` para `domain.shared.currency`, eliminando duplicação entre `Currency` e `Money`.
+  - **Mapeamento JPA & Persistência**:
+    - Criada `ReceivableEntity` estendendo `BaseEntity`, reaproveitando os enums de domínio `ReceivableType`/`ReceivableStatus` via `@Enumerated`.
+    - Migration `V4__create_receivable_schema.sql`, FK para `assignor` e `currency`, e `CHECK` de `face_value > 0`.
+  - **DTOs & Camada de Aplicação**:
+    - Criados os records `ReceivableRequest`/`ReceivableResponse`.
+    - Implementado `update` em `ReceivableServiceImpl` no mesmo padrão de `AssignorServiceImpl.update`: busca o domínio atual via `findDomainById` (helper privado reaproveitado também por `findById`), valida que `assignorId` e `type` não mudaram, aplica `currentReceivable.update(...)` e persiste.
+  - **Camada de Serviço (`ReceivableServiceImpl`)**:
+    - Configurado `@Transactional(readOnly = true)` na classe e `@Transactional` nos métodos de escrita (`create` e `update`).
+    - Validação cruzada de existência do cedente via `AssignorRepository.existsById` antes da criação, lançando `DomainNotFoundException`.
+  - **Testes Unitários (JUnit 5, AssertJ & Mockito)**:
+    - Testes de `Money` e `Receivable` (domínio puro) cobrindo validação de invariantes e transições de estado inválidas.
+    - Estruturada `ReceivableServiceImplTest` com organização em classes internas `@Nested`: `CreateTests`, `UpdateTests`, `FindByIdTests`, `FindByAssignorTests`.
+    - Aplicada `@DisplayName` em todos os cenários para relatórios legíveis na IDE/CI-CD.

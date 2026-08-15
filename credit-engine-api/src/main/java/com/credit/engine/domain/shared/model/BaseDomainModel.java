@@ -1,4 +1,4 @@
-package com.credit.engine.domain.shared.entity;
+package com.credit.engine.domain.shared.model;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package com.credit.engine.domain.shared.entity;
+package com.credit.engine.domain.shared.cnpj;
 
 import com.credit.engine.domain.shared.exception.InvalidCnpjException;
 import org.junit.jupiter.api.DisplayName;

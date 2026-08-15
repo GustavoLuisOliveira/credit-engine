@@ -1,6 +1,6 @@
 package com.credit.engine.domain.model.currency;
 
-import com.credit.engine.domain.shared.entity.BaseDomainModel;
+import com.credit.engine.domain.shared.model.BaseDomainModel;
 
 import java.math.BigDecimal;
 import java.time.Instant;

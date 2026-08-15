@@ -1,5 +1,7 @@
 package com.credit.engine.domain.model.currency;
 
+import com.credit.engine.domain.shared.currency.CurrencyCodeValidator;
+
 import java.time.Instant;
 import java.util.Objects;
 
@@ -26,20 +28,13 @@ public class Currency {
 
     /** Cria uma nova moeda (ainda não persistida), validando o código ISO. */
     public static Currency create(String code, String name, String symbol) {
-        String normalizedCode = validateAndNormalizeCode(code);
+        String normalizedCode = CurrencyCodeValidator.validateAndNormalize(code);
         return new Currency(normalizedCode, name, symbol, null, null);
     }
 
     /** Reidrata uma moeda já persistida, sem revalidar o código. */
     public static Currency restore(String code, String name, String symbol, Instant createdAt, Instant updatedAt) {
         return new Currency(code, name, symbol, createdAt, updatedAt);
-    }
-
-    private static String validateAndNormalizeCode(String code) {
-        if (code == null || code.trim().length() != 3)
-            throw new IllegalArgumentException("Código de moeda deve ter exatamente 3 letras (ISO 4217)");
-
-        return code.trim().toUpperCase();
     }
 
     public void rename(String newName, String newSymbol) {
