@@ -8,7 +8,6 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * Entidade JPA de Currency. Chave natural (código ISO 4217), não gerada.
@@ -24,11 +23,9 @@ public class CurrencyEntity extends BaseAuditEntity {
     @Column(name = "id", length = 3, nullable = false, updatable = false)
     private String id;
 
-    @Setter
     @Column(name = "name", length = 50, nullable = false)
     private String name;
 
-    @Setter
     @Column(name = "symbol", length = 5, nullable = false)
     private String symbol;
 
