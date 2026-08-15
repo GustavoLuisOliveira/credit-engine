@@ -1,7 +1,7 @@
 package com.credit.engine.domain.model.assignor;
 
-import com.credit.engine.domain.shared.entity.BaseDomainModel;
-import com.credit.engine.domain.shared.entity.Cnpj;
+import com.credit.engine.domain.shared.model.BaseDomainModel;
+import com.credit.engine.domain.shared.cnpj.Cnpj;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * Modelo de domínio do Cedente (Assignor).
  */
-public final class Assignor extends BaseDomainModel {
+public class Assignor extends BaseDomainModel {
 
     private final Cnpj documentNumber;
     private final String name;

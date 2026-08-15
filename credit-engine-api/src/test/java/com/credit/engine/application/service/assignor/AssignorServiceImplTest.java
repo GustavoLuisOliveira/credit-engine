@@ -3,7 +3,7 @@ package com.credit.engine.application.service.assignor;
 import com.credit.engine.application.dto.assignor.AssignorRequest;
 import com.credit.engine.application.dto.assignor.AssignorResponse;
 import com.credit.engine.domain.model.assignor.Assignor;
-import com.credit.engine.domain.shared.entity.Cnpj;
+import com.credit.engine.domain.shared.cnpj.Cnpj;
 import com.credit.engine.domain.shared.exception.DomainConflictException;
 import com.credit.engine.domain.shared.exception.DomainNotFoundException;
 import com.credit.engine.infrastructure.persistence.entity.assignor.AssignorEntity;
