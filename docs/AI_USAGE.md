@@ -33,7 +33,16 @@ A IA foi utilizada como ferramenta de apoio para:
 
 ### [Feature] Módulo de Gerenciamento de Moedas e Taxas de Câmbio (Currency & Exchange Rate)
 - **Branch**: `feature/currency-context`
-- **Prompt**: "Implementação, refatoração, validação, migração de banco de dados e testes unitários do módulo de moedas (Currency) e taxas de câmbio (ExchangeRate)."
+- **Prompts estratégicos utilizados**:
+  - "Implementação, validação, migração de banco de dados e testes unitários do módulo de moedas (Currency) e taxas de câmbio (ExchangeRate) respeitando a convenção de pacotes e a arquitetura em camadas."
+  - "Definição de regras de validação Bean Validation (@DecimalMin, @PastOrPresent, @NotBlank) com mensagens em português e tratamento de exceções de domínio."
+  - "Ajuste na inicialização do container PostgreSQL (Docker Compose) tratando erros de collation UTF-8 e parâmetros de fuso horário global (UTC / Instant) no Spring Boot."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **Normalização de inputs (`toUpperCase`)**: A verificação de existência no repositório (`existsById`) não utilizava normalização em alguns pontos de escrita, foi corrigido para garantir que `code.toUpperCase()` fosse aplicado em consultas antes da persistência.
+  - **Remoção de propriedade obsoleta no Docker**: A IA manteve a chave `version` no `docker-compose.yml`, foi ajustado para remover o campo descontinuado e corrigir o erro de banco existente no `healthcheck`.
+- **Análise crítica**:
+  - **Onde economizou tempo**: Agilizou significativamente a criação de boilerplate repetitivo (DTOs, scripts de migração Flyway, anotações de validação e mapeamento de exceções customizadas). Também simplificou a configuração do Jackson Serializer para tipos de data `Instant`.
+  - **Onde exigiu atenção humana**: Garantir que as entidades JPA e tabelas seguissem rigorosamente os conceitos de imutabilidade (*Append-Only* na `exchange_rate`), consistência dos fusos horários no Spring Boot e no banco de dados.
 - **Contexto & Decisão**:
   - **Domínio & Regras de Negócio**:
     - Definidas as regras de imutabilidade e conversão matemática de taxas de câmbio (`ExchangeRate.convert`).
