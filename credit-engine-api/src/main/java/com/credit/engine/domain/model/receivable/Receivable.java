@@ -23,7 +23,7 @@ public class Receivable extends BaseDomainModel {
     private final LocalDate dueDate;
     private ReceivableStatus status;
 
-    public Receivable(UUID id, UUID assignorId, ReceivableType type, String documentNumber, Money faceValue, LocalDate dueDate, ReceivableStatus status, Instant createdAt, Instant updatedAt) {
+    private Receivable(UUID id, UUID assignorId, ReceivableType type, String documentNumber, Money faceValue, LocalDate dueDate, ReceivableStatus status, Instant createdAt, Instant updatedAt) {
         super(id, createdAt, updatedAt);
         this.assignorId = Objects.requireNonNull(assignorId, "assignorId é obrigatório");
         this.type = Objects.requireNonNull(type, "type é obrigatório");
