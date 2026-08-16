@@ -16,6 +16,6 @@ public interface PricingStrategy {
 
     ReceivableType supports();
 
-    PricingResult calculate(Receivable receivable, BigDecimal baseRateFraction, BigDecimal spreadRateFraction, LocalDate settlementDate);
+    PricingResult calculate(Receivable receivable, BigDecimal baseRateFraction, BigDecimal spreadRateFraction, LocalDate valuationDate);
 
 }

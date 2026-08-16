@@ -49,8 +49,8 @@ class PostDatedCheckPricingStrategyTest {
     @DisplayName("Deve aceitar e aplicar o spread no prazo mínimo permitido de 1 dia")
     void shouldApplyDiscountForMinimumOneDayTerm() {
         // Dado um cheque pré-datado com bom para / vencimento para 1 dia após a data de liquidação
-        LocalDate settlementDate = LocalDate.now();
-        LocalDate dueDate = settlementDate.plusDays(1);
+        LocalDate valuationDate = LocalDate.now();
+        LocalDate dueDate = valuationDate.plusDays(1);
         Receivable receivable = Receivable.create(
                 UUID.randomUUID(), ReceivableType.POST_DATED_CHECK, "CHK-004",
                 Money.of(new BigDecimal("10000.00"), "BRL"), dueDate
@@ -58,7 +58,7 @@ class PostDatedCheckPricingStrategyTest {
 
         // Quando calcula a precificação
         PricingResult result = strategy.calculate(
-                receivable, new BigDecimal("0.10"), new BigDecimal("0.015"), settlementDate);
+                receivable, new BigDecimal("0.10"), new BigDecimal("0.015"), valuationDate);
 
         // Então o prazo deve ser > 0 e o spread deve gerar algum desconto (ainda que pequeno)
         assertThat(result.getTerm()).isGreaterThan(BigDecimal.ZERO);
@@ -70,15 +70,15 @@ class PostDatedCheckPricingStrategyTest {
     @DisplayName("Deve aplicar o deságio/desconto composto corretamente para prazo de um mês")
     void shouldApplyDiscountForOneMonthTerm() {
         // Dado um cheque pré-datado com vencimento para 30 dias após a data de liquidação
-        LocalDate settlementDate = LocalDate.now();
-        LocalDate dueDate = settlementDate.plusDays(30);
+        LocalDate valuationDate = LocalDate.now();
+        LocalDate dueDate = valuationDate.plusDays(30);
         Receivable receivable = Receivable.create(
                 UUID.randomUUID(), ReceivableType.POST_DATED_CHECK, "CHK-002",
                 Money.of(new BigDecimal("10000.00"), "BRL"), dueDate);
 
         // Quando calcula a precificação com taxa base 10% e spread 1,5% (total = 11,5%)
         PricingResult result = strategy.calculate(
-                receivable, new BigDecimal("0.10"), new BigDecimal("0.015"), settlementDate);
+                receivable, new BigDecimal("0.10"), new BigDecimal("0.015"), valuationDate);
 
         // Prazo = 30 dias / 30 = 1 mês; fator = (1.115)^1 = 1.115
         // VP = 10000 / 1.115 ≈ 8968.6099 ; Desconto ≈ 1031.3901
@@ -91,8 +91,8 @@ class PostDatedCheckPricingStrategyTest {
     @DisplayName("Deve rejeitar o cálculo de precificação para cheque pré-datado já vencido na data de liquidação")
     void shouldRejectAlreadyDueReceivable() {
         // Dado um cheque pré-datado cuja data de bom para/vencimento é anterior à data de liquidação
-        LocalDate settlementDate = LocalDate.now();
-        LocalDate dueDate = settlementDate.minusDays(1);
+        LocalDate valuationDate = LocalDate.now();
+        LocalDate dueDate = valuationDate.minusDays(1);
         Receivable receivable = Receivable.create(
                 UUID.randomUUID(), ReceivableType.POST_DATED_CHECK, "CHK-003",
                 Money.of(new BigDecimal("1000.00"), "BRL"), dueDate
@@ -100,7 +100,7 @@ class PostDatedCheckPricingStrategyTest {
 
         // Deve lançar IllegalArgumentException contendo a mensagem indicando que o título está vencido
         assertThatThrownBy(() -> strategy.calculate(
-                receivable, new BigDecimal("0.10"), new BigDecimal("0.015"), settlementDate))
+                receivable, new BigDecimal("0.10"), new BigDecimal("0.015"), valuationDate))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("vencido");
     }

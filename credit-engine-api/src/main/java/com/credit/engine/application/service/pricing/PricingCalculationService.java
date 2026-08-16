@@ -12,11 +12,11 @@ public interface PricingCalculationService {
      * É o motor por trás do "Painel do Operador" (exibição em tempo real do valor líquido).
      *
      * @param receivableId       ID do recebível a ser precificado.
-     * @param settlementDate     Data de liquidação hipotética para o cálculo do deságio.
+     * @param valuationDate      Data de liquidação hipotética para o cálculo do deságio.
      * @param targetCurrencyCode (Opcional) Código da moeda de destino.
      *                           Se informado e diferente da moeda do título, a simulação retornará o valor convertido via cotação vigente.
      * @return DTO com os detalhes da simulação de precificação realizada.
      */
-    PricingSimulationResponse simulate(UUID receivableId, LocalDate settlementDate, String targetCurrencyCode);
+    PricingSimulationResponse simulate(UUID receivableId, LocalDate valuationDate, String targetCurrencyCode);
 
 }

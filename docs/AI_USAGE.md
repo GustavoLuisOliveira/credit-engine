@@ -7,6 +7,7 @@ ao desenvolvimento.
 
 - ChatGPT
 - Gemini
+- Claude
 
 ## Objetivo do uso
 
@@ -191,3 +192,44 @@ A IA foi utilizada como ferramenta de apoio para:
     - `PricingParameterTest`: validação de `totalRate()`, `baseRateAsFraction()`/`spreadRateAsFraction()`, e rejeição de taxas negativas/tipo nulo.
     - `PricingStrategyResolverTest`: resolução correta por `ReceivableType` e exceção quando não há estratégia registrada.
     - `PricingCalculationServiceImplTest`: simulação sem conversão cambial, sem conversão quando moeda alvo é igual à original, com conversão cambial aplicada sobre o valor presente, resolução da estratégia correta para `POST_DATED_CHECK` (prova que o resolver não "vaza" para a estratégia errada), e os dois cenários de exceção (recebível não encontrado / parâmetro de precificação não configurado).
+
+--- 
+
+### [Feature] Contexto de Liquidação (Settlement, Settlement Item)
+- **Branch**: `feature/settlement-context`
+- **Prompts estratégicos utilizados**:
+  - "Implementação da vertical slice completa de Settlement/SettlementItem (domain, infrastructure, application, web), seguindo o padrão já estabelecido pelas slices anteriores (Currency, Assignor, Receivable/Pricing)."
+  - "Avaliação de onde armazenar o prazo entre liquidação e vencimento: dias corridos (auditoria legível) vs. o valor fracionário em meses efetivamente usado no expoente da fórmula de deságio."
+  - "Verificação se a data usada como base da precificação do lote (valuationDate) estava sendo persistida em algum lugar, ou se só existia durante a execução da requisição."
+  - "Rename de campo para eliminar ambiguidade semântica entre a data-base de precificação `(valuationDate)` e o timestamp de auditoria `(settlementDateTime)` de quando o lote foi executado."
+  - "Geração da suíte de testes unitários (JUnit5 + Mockito + AssertJ) para Settlement, SettlementItem e SettlementServiceImpl, organizada em classes @Nested por cenário (pré-condições, same-currency, cross-currency, lote, concorrência, consultas)."
+  - "Revisão de nomes de métodos privados e simplificação de construtores de entidade após identificar parâmetros copiados de outras entidades sem necessidade real no contexto do Settlement."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **`term` (dias) vs. prazo fracionário usado na fórmula, revisado após feedback**: a primeira proposta da IA foi reconverter `dias / 30` sob demanda, sem coluna própria. Apontei, que essa reconversão perde precisão (o arredondamento `HALF_EVEN` já aplicado ao valor fracionário faz `term_months * 30` divergir de `term` na casa decimal). A decisão final foi congelar os dois valores separadamente: `term` (dias corridos, fato de auditoria legível) e `term_months` (o valor fracionário exato que alimentou o expoente da fórmula), ambos gravados no `settlement_item`.
+  - **`valuationDate` não estava sendo persistido em lugar nenhum**: inicialmente esse campo só existia durante a execução do `execute()`, usado para calcular `term`/`term_months`/taxas/valores do item e depois descartado. Questionei se isso não configurava perda de dado, e a resposta foi sim: a única forma de reconstruir "com que data-base esse lote foi precificado" seria um JOIN entre `settlement_item.term` e `receivable.due_date`, sem garantia de fidelidade para fins de auditoria/Extrato de Liquidação. Adicionada a coluna `valuation_date DATE NOT NULL` no cabeçalho `settlement` (não no item, por ser um dado do lote inteiro, não do recebível individual).
+  - **Nome de campo ambíguo (`settlementDate`)**: colidia semanticamente com `Settlement.settlementDateTime` (timestamp de quando o lote foi executado), apesar de representarem conceitos diferentes. Renomeado para `valuationDate`, termo padrão de mercado financeiro para a data-base de um cálculo de valor presente, eliminando a ambiguidade textual entre os dois campos.
+  - **Construtor de `SettlementEntity` com parâmetro `id` desnecessário**: copiado do padrão usado em entidades que suportam `update()` (como `ReceivableEntity`), sem que o `Settlement` tivesse essa necessidade real (é write-once, nunca reidratado com um domínio que já possua `id`).
+- **Análise crítica**:
+  - **Onde economizou tempo**: geração do boilerplate da vertical slice inteira (domain, entidade, mapper, repositório, DTOs, service, controller), e de testes (incluindo os cenários de concorrência e conversão cambial).
+  - **Onde exigiu atenção humana**: a IA não identificou de imediato duas lacunas reais de auditoria (`term_months` e `valuation_date`), ambas só corrigidas porque o questionei explicitamente "esse dado está sendo perdido?" antes de aceitar a primeira proposta como definitiva. Sem esse questionamento, a reconstrução desses valores dependeria de JOINs entre tabelas, e o sistema teria uma fonte de discrepância silenciosa entre o que a mesa de operação acredita ter usado para precificar e o que de fato é reconstruível a partir dos dados brutos armazenados.
+- **Contexto & Decisão**:
+  - **Domínio & Regras de Negócio**:
+    - Criados `Settlement` (aggregate root, cabeçalho de liquidação) e `SettlementItem` (fotografia de auditoria imutável) em `domain.model.settlement`, seguindo o mesmo estilo de POJOs sem anotações JPA já usado em `Receivable`/`PricingParameter`.
+    - `Settlement.totalFaceValue`/`totalDiscountAmount`/`totalNetAmount` sempre expressos na moeda alvo (`targetCurrency`, derivada dos próprios totais), nunca na moeda original dos títulos: um lote pode misturar recebíveis em BRL e USD, e a moeda alvo é a única unidade comum em que os valores podem ser somados.
+    - `Settlement.valuationDate`: data-base que alimentou a fórmula de deságio de todos os itens do lote, congelada no cabeçalho por ser um dado do lote inteiro (uma única execução usa uma única data-base para todos os recebíveis).
+    - `SettlementItem.term` (dias corridos, auditoria legível) e `termMonths` (fração usada no expoente da fórmula) congelados separadamente, sem perda de precisão na reconstrução.
+    - `SettlementItem.baseRate`/`spreadRate` gravam a fração decimal que efetivamente alimentou a fórmula, diferente do formato percentual usado em `pricing_parameter`.
+    - Proteção contra liquidação em duplicidade sob concorrência: a `UNIQUE` constraint em `settlement_item.receivable_id` é a garantia definitiva; a checagem otimista via `existsByReceivableId` é apenas um fail-fast que economiza cálculo desnecessário.
+  - **Mapeamento JPA & Persistência**:
+    - Migration `V6__create_settlement_schema.sql`: tabelas `settlement` (cabeçalho) e `settlement_item` (fotografia de auditoria), colunas de negócio `updatable = false` (imutável/append-only), coluna gerada `total_rate` (`base_rate + spread_rate`) no `settlement_item`, `UNIQUE` em `receivable_id`.
+    - Colunas `term_months NUMERIC(10,6)` e `valuation_date DATE NOT NULL` adicionadas após revisão, editadas diretamente na própria V6.
+    - `SettlementEntity`/`SettlementItemEntity` sem `@ManyToOne`/`@OneToMany` entre agregados, seguindo o padrão do projeto de referenciar por UUID/String puro, evitando acoplamento via JPA.
+    - Persistência do item via `saveAndFlush` (não `save`), para que a violação da `UNIQUE` constraint estoure dentro do método da service, traduzível para `DomainConflictException`, em vez de vazar como erro genérico só no commit final da transação.
+  - **DTOs & Camada de Aplicação**:
+    - `SettlementRequest`: `assignorId`, `valuationDate`, `targetCurrencyCode`, `receivableIds`.
+    - `SettlementResponse`/`SettlementItemResponse`: expõem `valuationDate`, `term`, `termMonths` e `totalRate` calculado (`baseRate + spreadRate`).
+    - `SettlementServiceImpl.execute()`: duas passadas, calcula preço e conversão cambial de cada recebível sem persistir nada (`calculateItem`), depois persiste o cabeçalho (para gerar o `settlementId`) e por fim persiste cada item e marca o recebível como liquidado (`persistItemAndSettleReceivable`), tudo dentro de uma única `@Transactional`.
+    - Conversão cambial: a mesma cotação (`exchangeRateUsed`) é aplicada a `faceValue`, `discountAmount` e `presentValue` do item, garantindo que os totais do `Settlement` (sempre na `targetCurrency`) somem de forma coerente entre si.
+  - **Testes Unitários (JUnit 5, AssertJ & Mockito)**:
+    - `SettlementTest`/`SettlementItemTest`: validações de invariantes que espelham os `CHECK` da migration (`term > 0`, taxas `>= 0`, valores positivos, câmbio `> 0`, moedas coerentes entre os `Money` do mesmo agregado).
+    - `SettlementServiceImplTest`, organizado em `@Nested` por cenário (`ExecutePreconditions`, `SameCurrencyExecution`, `CrossCurrencyExecution`, `BatchExecution`, `ConcurrencyAndIntegrity`, `SettlementQueries`): cobre as validações de pré-condição, o fluxo same-currency (sem chamar `ExchangeRateService`), o fluxo cross-currency (conversão consistente entre `faceValue`/`discountAmount`/`presentValue`), a acumulação de totais em lote com múltiplas moedas, a tradução de `DataIntegrityViolationException` em `DomainConflictException` sob concorrência (sem marcar o recebível como liquidado nesse caso), e as consultas `findById`/`findByAssignor`.
