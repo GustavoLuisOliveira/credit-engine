@@ -4,7 +4,6 @@ package com.credit.engine.application.service.pricing;
 import com.credit.engine.application.dto.currency.ExchangeRateResponse;
 import com.credit.engine.application.dto.pricing.PricingSimulationResponse;
 import com.credit.engine.application.service.currency.ExchangeRateService;
-import com.credit.engine.domain.model.currency.ExchangeRate;
 import com.credit.engine.domain.model.pricing.PricingParameter;
 import com.credit.engine.domain.model.receivable.Receivable;
 import com.credit.engine.domain.princing.PricingResult;
@@ -36,7 +35,7 @@ public class PricingCalculationServiceImpl implements PricingCalculationService 
     private final ExchangeRateService exchangeRateService;
 
     @Override
-    public PricingSimulationResponse simulate(UUID receivableId, LocalDate settlementDate, String targetCurrencyCode) {
+    public PricingSimulationResponse simulate(UUID receivableId, LocalDate valuationDate, String targetCurrencyCode) {
         // Busca o recebível e converte para o modelo de domínio
         Receivable receivable = receivableMapper.toDomain(
                 receivableRepository.findById(receivableId)
@@ -46,14 +45,14 @@ public class PricingCalculationServiceImpl implements PricingCalculationService 
         // Busca a taxa (base + spread) vigente para o tipo do recebível na data de liquidação
         PricingParameter parameter = pricingParameterMapper.toDomain(
                 pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
-                                receivable.getType(), settlementDate
+                                receivable.getType(), valuationDate
                         ).orElseThrow(() -> new DomainNotFoundException("Nenhum parâmetro de precificação vigente para: " + receivable.getType()))
         );
 
         // Resolve a estratégia de precificação pelo tipo do recebível e calcula o deságio
         PricingResult result = pricingStrategyResolver
                 .resolve(receivable.getType())
-                .calculate(receivable, parameter.baseRateAsFraction(), parameter.spreadRateAsFraction(), settlementDate);
+                .calculate(receivable, parameter.baseRateAsFraction(), parameter.spreadRateAsFraction(), valuationDate);
 
         String originalCurrency = receivable.getFaceValue().getCurrencyCode();
 
@@ -75,7 +74,7 @@ public class PricingCalculationServiceImpl implements PricingCalculationService 
 
         // Monta a resposta com o resultado da precificação e, se houver, a conversão cambial
         return new PricingSimulationResponse(
-                receivableId, settlementDate, parameter.getBaseRate(), parameter.getSpreadRate(), result.getTerm(),
+                receivableId, valuationDate, parameter.getBaseRate(), parameter.getSpreadRate(), result.getTerm(),
                 receivable.getFaceValue().getAmount(), result.getDiscountAmount().getAmount(),
                 result.getPresentValue().getAmount(), originalCurrency,
                 appliedTargetCurrency, exchangeRateUsed, convertedAmount

@@ -30,10 +30,10 @@ public class PricingSimulationController {
     @GetMapping
     public ResponseEntity<PricingSimulationResponse> simulate(
             @PathVariable UUID receivableId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate settlementDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate valuationDate,
             @RequestParam(required = false) String targetCurrencyCode
     ) {
-        return ResponseEntity.ok(pricingCalculationService.simulate(receivableId, settlementDate, targetCurrencyCode));
+        return ResponseEntity.ok(pricingCalculationService.simulate(receivableId, valuationDate, targetCurrencyCode));
     }
 
 }

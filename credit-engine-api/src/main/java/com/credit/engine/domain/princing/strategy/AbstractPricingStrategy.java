@@ -27,14 +27,14 @@ abstract class AbstractPricingStrategy implements PricingStrategy {
     private static final BigDecimal DAYS_PER_MONTH = new BigDecimal("30");
 
     @Override
-    public PricingResult calculate(Receivable receivable, BigDecimal baseRateFraction, BigDecimal spreadRateFraction, LocalDate settlementDate) {
+    public PricingResult calculate(Receivable receivable, BigDecimal baseRateFraction, BigDecimal spreadRateFraction, LocalDate valuationDate) {
         Objects.requireNonNull(receivable, "receivable é obrigatório");
         Objects.requireNonNull(baseRateFraction, "baseRate é obrigatório");
         Objects.requireNonNull(spreadRateFraction, "spreadRate é obrigatório");
-        Objects.requireNonNull(settlementDate, "settlementDate é obrigatório");
+        Objects.requireNonNull(valuationDate, "valuationDate é obrigatório");
 
         // Prazo fracionário em meses (ex: 45 dias corridos até o vencimento = 1.5 mês)
-        BigDecimal term = calculateTermInMonths(settlementDate, receivable.getDueDate());
+        BigDecimal term = calculateTermInMonths(valuationDate, receivable.getDueDate());
         // Taxa total do período = taxa base de mercado + spread de risco do tipo de recebível
         BigDecimal totalRate = baseRateFraction.add(spreadRateFraction);
 
@@ -51,8 +51,8 @@ abstract class AbstractPricingStrategy implements PricingStrategy {
         return new PricingResult(baseRateFraction, spreadRateFraction, term, discountAmount, presentValue);
     }
 
-    private BigDecimal calculateTermInMonths(LocalDate settlementDate, LocalDate dueDate) {
-        long days = ChronoUnit.DAYS.between(settlementDate, dueDate);
+    private BigDecimal calculateTermInMonths(LocalDate valuationDate, LocalDate dueDate) {
+        long days = ChronoUnit.DAYS.between(valuationDate, dueDate);
 
         // Prazo mínimo de 1 dia: cobre tanto o recebível já vencido (days < 0) quanto o
         // vencimento na própria data de liquidação (days == 0). Em ambos os casos o fator
@@ -63,7 +63,7 @@ abstract class AbstractPricingStrategy implements PricingStrategy {
                     "O prazo entre a liquidação e o vencimento deve ser de, no mínimo, 1 dia. "
                             + "Não é possível aplicar o spread de risco a um recebível já vencido ou "
                             + "vencendo na própria data de liquidação (dueDate=" + dueDate
-                            + ", settlementDate=" + settlementDate + ")");
+                            + ", valuationDate=" + valuationDate + ")");
         }
 
         return BigDecimal.valueOf(days).divide(DAYS_PER_MONTH, RATE_SCALE, RoundingMode.HALF_EVEN);

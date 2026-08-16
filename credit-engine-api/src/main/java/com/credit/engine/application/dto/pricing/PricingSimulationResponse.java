@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record PricingSimulationResponse(
         UUID receivableId,
-        LocalDate settlementDate,
+        LocalDate valuationDate,
         BigDecimal baseRate,
         BigDecimal spreadRate,
         BigDecimal term,
