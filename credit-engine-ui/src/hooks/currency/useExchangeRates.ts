@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
-import {useToast} from "../context/ToastContext.tsx";
-import type ExchangeRateResponse from "../services/currency/dto/ExchangeRateResponse.ts";
-import {exchangeRateService} from "../services/currency/exchangeRate.service.ts";
-import {ApiError} from "../api/errors/ApiError.ts";
-import type ExchangeRateRequest from "../services/currency/dto/ExchangeRateRequest.ts";
-import {validateExchangeRateRequest} from "../services/currency/dto/ExchangeRateRequest.ts";
+import {useToast} from "../../context/ToastContext.tsx";
+import type ExchangeRateResponse from "../../services/currency/dto/ExchangeRateResponse.ts";
+import {exchangeRateService} from "../../services/currency/exchangeRate.service.ts";
+import {ApiError} from "../../api/errors/ApiError.ts";
+import type ExchangeRateRequest from "../../services/currency/dto/ExchangeRateRequest.ts";
+import {validateExchangeRateRequest} from "../../services/currency/dto/ExchangeRateRequest.ts";
 
 export function useExchangeRates() {
     const toast = useToast();

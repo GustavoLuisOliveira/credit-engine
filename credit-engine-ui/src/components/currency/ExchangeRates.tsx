@@ -5,7 +5,7 @@ import { SelectInput } from '../shared/form/inputs/SelectInput';
 import { AddButton } from '../shared/btns/AddButton';
 import type CurrencyResponse from '../../services/currency/dto/CurrencyResponse';
 import DateUtils from '../../utils/DateUtils';
-import {useExchangeRates} from "../../hooks/useExchangeRates.ts";
+import {useExchangeRates} from "../../hooks/currency/useExchangeRates.ts";
 import {FormExchangeRate} from "./FormExchangeRate.tsx";
 import type {SelectOption} from "../shared/form/models/SelectOption.ts";
 

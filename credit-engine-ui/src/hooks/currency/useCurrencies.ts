@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import {useToast} from "../context/ToastContext.tsx";
-import type CurrencyResponse from "../services/currency/dto/CurrencyResponse.ts";
-import {currencyService} from "../services/currency/currency.service.ts";
-import type CurrencyRequest from "../services/currency/dto/CurrencyRequest.ts";
-import {validateCurrencyRequest} from "../services/currency/dto/CurrencyRequest.ts";
+import {useToast} from "../../context/ToastContext.tsx";
+import type CurrencyResponse from "../../services/currency/dto/CurrencyResponse.ts";
+import {currencyService} from "../../services/currency/currency.service.ts";
+import type CurrencyRequest from "../../services/currency/dto/CurrencyRequest.ts";
+import {validateCurrencyRequest} from "../../services/currency/dto/CurrencyRequest.ts";
 
 export function useCurrencies() {
     const toast = useToast();

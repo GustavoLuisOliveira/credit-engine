@@ -74,7 +74,7 @@ public class PricingCalculationServiceImpl implements PricingCalculationService 
 
         // Monta a resposta com o resultado da precificação e, se houver, a conversão cambial
         return new PricingSimulationResponse(
-                receivableId, valuationDate, parameter.getBaseRate(), parameter.getSpreadRate(), result.getTerm(),
+                receivableId, valuationDate, parameter.getBaseRate(), parameter.getSpreadRate(), result.getTermMonths(),
                 receivable.getFaceValue().getAmount(), result.getDiscountAmount().getAmount(),
                 result.getPresentValue().getAmount(), originalCurrency,
                 appliedTargetCurrency, exchangeRateUsed, convertedAmount
