@@ -16,6 +16,7 @@ export const EditButton: React.FC<Props> = ({ onClick, label, icon = 'edit_note'
             className={label ? 'gap-2' : ''}
             rounded
             outlined
+            size={'small'}
             tooltip="Editar"
             tooltipOptions={{ position: 'top', showDelay: 200 }}
             onClick={onClick}

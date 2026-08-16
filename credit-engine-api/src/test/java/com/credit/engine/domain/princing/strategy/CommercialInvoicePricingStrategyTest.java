@@ -61,7 +61,7 @@ class CommercialInvoicePricingStrategyTest {
                 receivable, new BigDecimal("0.10"), new BigDecimal("0.015"), valuationDate);
 
         // Então o prazo deve ser > 0 e o spread deve gerar algum desconto (ainda que pequeno)
-        assertThat(result.getTerm()).isGreaterThan(BigDecimal.ZERO);
+        assertThat(result.getTermMonths()).isGreaterThan(BigDecimal.ZERO);
         assertThat(result.getDiscountAmount().getAmount()).isGreaterThan(BigDecimal.ZERO);
         assertThat(result.getPresentValue().getAmount()).isLessThan(new BigDecimal("10000.0000"));
     }
@@ -82,7 +82,7 @@ class CommercialInvoicePricingStrategyTest {
 
         // Prazo = 30 dias / 30 = 1 mês; fator = (1.115)^1 = 1.115
         // VP = 10000 / 1.115 ≈ 8968.6099 ; Desconto ≈ 1031.3901
-        assertThat(result.getTerm()).isEqualByComparingTo("1.0000000000");
+        assertThat(result.getTermMonths()).isEqualByComparingTo("1.0000000000");
         assertThat(result.getPresentValue().getAmount().doubleValue()).isCloseTo(8968.6099, within(0.01));
         assertThat(result.getDiscountAmount().getAmount().doubleValue()).isCloseTo(1031.3901, within(0.01));
     }

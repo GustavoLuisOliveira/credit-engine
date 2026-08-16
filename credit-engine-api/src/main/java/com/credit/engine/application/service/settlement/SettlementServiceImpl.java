@@ -187,7 +187,7 @@ public class SettlementServiceImpl implements SettlementService {
 
         // Monta a fotografia de auditoria imutável do item
         SettlementItem item = SettlementItem.create(
-                settlementId, receivable.getId(), calculation.termDays(), result.getTerm(),
+                settlementId, receivable.getId(), calculation.termDays(), result.getTermMonths(),
                 result.getBaseRate(), result.getSpreadRate(),
                 receivable.getFaceValue(), result.getDiscountAmount(), result.getPresentValue(),
                 calculation.exchangeRateUsed(), calculation.settlementAmount()

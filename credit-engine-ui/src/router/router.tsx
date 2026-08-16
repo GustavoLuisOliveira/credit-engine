@@ -1,8 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom';
 import App from '../App';
 import ErrorPage from '../components/shared/error/ErrorPage';
-import { Home } from '../components/home/Home';
 import {CurrencyPage} from "../components/currency/CurrencyPage.tsx";
+import {OperatorPanel} from "../components/operatorPanel/OperatorPanelPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -11,7 +11,7 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Home />,
+                element: <OperatorPanel />,
             },
             {
                 path: '/currencies',

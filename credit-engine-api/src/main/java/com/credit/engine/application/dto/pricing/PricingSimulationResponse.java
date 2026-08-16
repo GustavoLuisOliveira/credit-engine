@@ -9,7 +9,7 @@ public record PricingSimulationResponse(
         LocalDate valuationDate,
         BigDecimal baseRate,
         BigDecimal spreadRate,
-        BigDecimal term,
+        BigDecimal termMonths,
         BigDecimal faceValue,
         BigDecimal discountAmount,
         BigDecimal presentValue,

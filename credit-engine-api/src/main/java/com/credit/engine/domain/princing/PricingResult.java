@@ -14,15 +14,15 @@ public final class PricingResult {
 
     private final BigDecimal baseRate;
     private final BigDecimal spreadRate;
-    private final BigDecimal term;
+    private final BigDecimal termMonths;
     private final Money discountAmount;
     private final Money presentValue;
 
-    public PricingResult(BigDecimal baseRate, BigDecimal spreadRate, BigDecimal term,
+    public PricingResult(BigDecimal baseRate, BigDecimal spreadRate, BigDecimal termMonths,
                          Money discountAmount, Money presentValue) {
         this.baseRate = Objects.requireNonNull(baseRate, "baseRate é obrigatório");
         this.spreadRate = Objects.requireNonNull(spreadRate, "spreadRate é obrigatório");
-        this.term = Objects.requireNonNull(term, "term é obrigatório");
+        this.termMonths = Objects.requireNonNull(termMonths, "termMonths é obrigatório");
         this.discountAmount = Objects.requireNonNull(discountAmount, "discountAmount é obrigatório");
         this.presentValue = Objects.requireNonNull(presentValue, "presentValue é obrigatório");
     }
@@ -35,8 +35,8 @@ public final class PricingResult {
         return spreadRate;
     }
 
-    public BigDecimal getTerm() {
-        return term;
+    public BigDecimal getTermMonths() {
+        return termMonths;
     }
 
     public Money getDiscountAmount() {
