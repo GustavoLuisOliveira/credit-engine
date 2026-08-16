@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
 import { MaskedInput } from '../shared/form/inputs/MaskedInput.tsx';
@@ -16,7 +16,6 @@ interface Props {
     findByDocumentNumber: (documentNumber: string) => void;
     create: (request: AssignorRequest) => Promise<AssignorResponse | null>;
     reset: () => void;
-    onAssignorSelected: (assignorId: string) => void;
 }
 
 export const AssignorSearch: React.FC<Props> = ({
@@ -27,16 +26,9 @@ export const AssignorSearch: React.FC<Props> = ({
                                                     findByDocumentNumber,
                                                     create,
                                                     reset,
-                                                    onAssignorSelected,
                                                 }) => {
     const [documentNumber, setDocumentNumber] = useState('');
     const [formVisible, setFormVisible] = useState(false);
-
-    // Propaga o id do cedente para o formulario do recebível sempre que ele
-    // muda, seja por busca ou por cadastro inline.
-    useEffect(() => {
-        if (assignor) onAssignorSelected(assignor.id);
-    }, [assignor, onAssignorSelected]);
 
     const handleChangeAssignor = () => {
         reset();
@@ -51,7 +43,12 @@ export const AssignorSearch: React.FC<Props> = ({
                 content={(
                     <div className="flex align-items-center justify-content-between w-full">
                         <span><strong>{assignor.name}</strong> - {assignor.documentNumber}</span>
-                        <Button label="Trocar" text onClick={handleChangeAssignor} type="button" />
+                        <Button label="Trocar Cedente"
+                                icon={<Icon icon={'find_replace'}/>}
+                                text size={'small'}
+                                onClick={handleChangeAssignor}
+                                type="button"
+                        />
                     </div>
                 )}
             />
@@ -82,6 +79,7 @@ export const AssignorSearch: React.FC<Props> = ({
                         loading={loading}
                         disabled={!documentNumber}
                         type="button"
+                        size={'small'}
                     />
                 </div>
             </div>

@@ -12,7 +12,7 @@ interface Props {
     onTargetCurrencyCodeChange: (code: string) => void;
 }
 
-// Campos compartilhados entre a simulacao do recebível novo e a simulacao em
+// Campos compartilhados entre a simulação do recebível novo e a simulação em
 // lote dos recebíveis existentes. Ficam no topo, fora do form de recebível,
 // para nao precisar reabrir o form so para trocar a moeda de liquidação.
 export const PrincingSimulationParams: React.FC<Props> = ({
@@ -25,18 +25,17 @@ export const PrincingSimulationParams: React.FC<Props> = ({
     const currencyOptions: SelectOption[] = currencies.map(c => ({ label: `${c.code} - ${c.name}`, value: c.code }));
 
     return (
-        <div className="grid">
-            <div className="col-12 md:col-6 mb-3">
+        <div className="grid justify-content-center align-content-center mt-3">
+            <div className="col-12 md:col-4 lg:col-3">
                 <DateInput
-                    label="Data de Referencia da Simulacao"
+                    label="Data de Referência da Simulação"
                     id="valuationDate"
-                    maxDate={new Date()}
                     value={valuationDate}
                     onChange={e => onValuationDateChange((e.value as Date) ?? null)}
                 />
             </div>
 
-            <div className="col-12 md:col-6 mb-3">
+            <div className="col-12 md:col-4">
                 <SelectInput
                     label="Moeda de Liquidação"
                     id="targetCurrencyCode"

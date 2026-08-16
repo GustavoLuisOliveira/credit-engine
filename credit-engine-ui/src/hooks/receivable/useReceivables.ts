@@ -11,11 +11,6 @@ export function useReceivables() {
     const [loading, setLoading] = useState(false);
     const [receivables, setReceivables] = useState<ReceivableResponse[]>([]);
 
-    // Guarda o id do recebível apos o primeiro salvamento. Enquanto o
-    // operador estiver ajustando a mesma operacao, chamadas seguintes fazem
-    // update (PUT) no lugar de criar um novo registro a cada simulacao.
-    const [receivableId, setReceivableId] = useState<string | null>(null);
-
     const findByAssignor = useCallback((assignorId: string) => {
         setLoading(true);
         receivableService.findByAssignor(assignorId)
@@ -24,30 +19,33 @@ export function useReceivables() {
             .finally(() => setLoading(false));
     }, [toast]);
 
-    const save = useCallback((request: ReceivableRequest): Promise<ReceivableResponse | null> => {
+    // receivableId ausente ou null cria um recebível novo (POST). Informado,
+    // atualiza o recebível existente (PUT). O hook nao guarda mais nenhum id
+    // de rascunho internamente, quem chama decide qual operacao fazer.
+    const save = useCallback((
+        request: ReceivableRequest,
+        receivableId?: string | null,
+    ): Promise<ReceivableResponse | null> => {
         const errors = validateReceivableRequest(request);
         if (errors.length > 0) {
             errors.forEach(error => toast.error({ detail: error.message }));
             return Promise.resolve(null);
         }
+
         setSaving(true);
         const persist = receivableId
             ? receivableService.update(receivableId, request)
             : receivableService.create(request);
+
         return persist
-            .then(receivable => {
-                setReceivableId(receivable.id);
-                return receivable;
-            })
             .catch(e => {
                 toast.error({ detail: e.message });
                 return null;
             })
             .finally(() => setSaving(false));
-    }, [receivableId, toast]);
+    }, [toast]);
 
     const reset = useCallback(() => {
-        setReceivableId(null);
         setReceivables([]);
     }, []);
 
@@ -55,7 +53,6 @@ export function useReceivables() {
         saving,
         loading,
         receivables,
-        receivableId,
         findByAssignor,
         save,
         reset,

@@ -15,6 +15,7 @@ export const SaveButton: React.FC<Props> = ({ label = 'Salvar', onClick, classNa
             label={label}
             icon={<Icon icon={'task_alt'} />}
             rounded
+            size={'small'}
             className={`${label ? 'gap-2' : ''} ${className}`}
             severity="success"
             onClick={onClick}

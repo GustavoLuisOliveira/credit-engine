@@ -14,6 +14,7 @@ export const CancelButton: React.FC<Props> = ({ label = 'Cancelar', onClick }) =
             icon={<Icon icon={'close'} />}
             rounded
             outlined
+            size={'small'}
             className="gap-2"
             severity="secondary"
             onClick={onClick}

@@ -16,6 +16,7 @@ export const AddButton: React.FC<Props> = ({ label = '', onClick, className = ''
             icon={<Icon icon={icon} />}
             rounded
             outlined
+            size={'small'}
             className={`${label ? 'gap-2' : ''} ${className}`}
             severity="success"
             tooltip={label ? `Adicionar ${label}` : undefined}

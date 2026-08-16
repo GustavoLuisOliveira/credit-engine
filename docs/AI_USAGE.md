@@ -258,3 +258,49 @@ A IA foi utilizada como ferramenta de apoio para:
     - Regra de negocio de UX aplicada tanto na consulta (`ExchangeRates`) quanto no cadastro (`FormExchangeRate`): a moeda selecionada como origem e removida das opções de destino, e o destino e limpo automaticamente se coincidir com a nova origem escolhida.
   - **Configuração Backend**:
     - `CorsConfig` criado no backend (`infrastructure.config`), com origem configuravel via `app.cors.allowed-origins` (relaxed binding para `APP_CORS_ALLOWED_ORIGINS`), permitindo que o `docker-compose.yml` injete a origem do frontend a partir do `.env` sem alterar codigo Java.
+
+---
+
+### [Feature] Painel do Operador (Assignor, Receivable, Pricing Simulation) - Frontend
+- **Branch**: `feature/operator-panel`
+- **Prompts estrategicos utilizados**:
+  - "Implementação do Painel do Operador seguindo o padrão já estabelecido no scaffold existente (client HTTP, hooks com toast, DTOs com `validate*Request`, `FormDialogContainer`, inputs compartilhados), a partir da leitura do `OpenApi.json` real do backend."
+  - "Separação de um hook único (`useOperatorPanel`) em dois hooks especializados por responsabilidade (`useReceivables` para persistência do recebível, `usePricingSimulation` para a chamada de simulação)."
+  - "Adição de listagem de recebíveis em aberto do cedente com simulação em lote, e redesenho de UX movendo Data de Referência e Moeda de Liquidação para uma seção compartilhada no topo, com o formulário de recebível novo escondido atrás de um botão."
+  - "Refatoração do fluxo de simulação em lote: ao salvar um recebível novo, selecioná-lo junto aos já selecionados e simular só ele, sem refazer a simulação dos demais; usar somente `BatchPrincingSimulationResults` (remoção da simulação individual isolada); deixar o `ReceivableForm` controlado apenas pelo `ReceivableList`; limpar o `OperatorPanel`."
+  - "Ajuste de assinatura do `save` para receber `receivableId` como parâmetro opcional em vez de guardá-lo como estado interno do hook, evitando que o hook decida create/update por conta própria."
+  - "Simetria entre marcar e desmarcar um recebível na lista: marcar simula só o item novo, desmarcar descarta só o resultado daquele item, sem afetar os demais já simulados."
+  - "Recalcular os resultados já simulados quando a Data de Referência ou a Moeda de Liquidação mudam, já que ambas afetam o valor de todo mundo que já tem resultado."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **Conflito de contrato identificado antes de codar**: o endpoint `GET /receivables/{id}/pricing-simulation` exige um `Receivable` já persistido, inviabilizando simulação em tempo real via debounce a partir de dados soltos do formulário. Resolvido com fluxo "Simular": primeiro clique faz `POST`, cliques seguintes no mesmo recebível fazem `PUT`, evitando duplicar registros a cada ajuste.
+  - **Ausência de endpoints de listagem geral e de simulação em lote**: não existe `GET /assignors` sem filtro nem simulação em lote no backend. Adaptado com busca de cedente por CNPJ (com cadastro inline se não encontrado) e loop de simulações individuais por recebível selecionado (`Promise.all`), sem somar os resultados.
+  - **Bug visual (moeda vazia)**: quando a moeda de liquidação escolhida era igual à moeda do título, `targetCurrencyCode` e `convertedAmount` vinham vazios na resposta, deixando "Cambio (BRL para )" e "Valor Líquido a Receber" em branco. Corrigido com fallback no frontend (`targetCurrencyCode || currencyCode`, `convertedAmount ?? presentValue`).
+  - **Rótulo incorreto no resultado da simulação**: o campo `term` estava rotulado como "dia(s)", mas as taxas são a.m. (ao mês), retornando meses fracionados. Corrigido o rótulo para "mes(es)".
+  - **Bug de estado singleton no `save`**: o `receivableId` guardado internamente no hook (`useReceivables`) fazia o segundo recebível criado virar um `PUT` no primeiro (erro "Tipo do título não pode ser alterado após o cadastro"). Corrigido primeiro isolando o reset do id de rascunho, depois eliminando esse estado por completo: `receivableId` passou a ser parâmetro opcional do `save`, e quem chama decide `create` ou `update`.
+  - **`upsertResults` apagando simulações de outros recebíveis**: a primeira versão filtrava `prev` mantendo só os ids presentes na atualização atual, descartando tudo que não fazia parte da chamada. Corrigido para só sobrescrever/inserir os ids da atualização, preservando o restante do Map.
+  - **Resultado de item desmarcado continuava exibido**: nada disparava a remoção quando o operador desmarcava um recebível na tabela, já que o `remove` só existia isolado, sem uso. Adicionado o diff de seleção (`added`/`removed`) no `onSelectionChange` do `ReceivableList`, chamando `remove` para os ids retirados.
+  - **Proposta inicial de resimular ao trocar moeda/data usava `useEffect` com `useRef` para evitar loop**: rejeitada por ser gambiarra (efeito lendo estado próprio via ref para não entrar em loop). Substituída por disparo direto nos handlers `onValuationDateChange`/`onTargetCurrencyCodeChange`, sem `useEffect`, usando os `receivableId`s já presentes em `results` no momento do evento.
+- **Analise critica**:
+  - **Onde economizou tempo**: leitura fiel do `OpenApi.json` e do scaffold existente evitou inconsistência de contrato e de estilo; reaproveitamento de componentes compartilhados (`FormDialogContainer`, inputs, padrão de `DataTable` já usado em `Currencies`) acelerou a montagem das novas telas.
+  - **Onde exigiu atenção humana**: os dois bugs de exibição (moeda vazia e rótulo de prazo) só foram percebidos ao testar visualmente no navegador, mostrando que suposições sobre o formato exato da resposta do backend (campo sempre preenchido, unidade sempre em dias) precisam ser validadas com dados reais, não só com o schema do OpenAPI.
+- **Contexto & Decisao**:
+  - **Arquitetura & Convenções**:
+    - Estrutura por contexto (`services/assignor`, `services/receivable`, `services/pricing`), espelhando o padrão do backend.
+    - Hooks especializados por responsabilidade (`useAssignors`, `useReceivables`, `usePricingSimulation`, `useBatchPricingSimulation`) em vez de um hook único orquestrando tudo.
+    - CNPJ tratado como digits-only na comunicação com o backend (`stripDocumentNumberMask`), mesmo padrão já estabelecido para o Assignor.
+    - `dueDate` convertido explicitamente para `yyyy-MM-dd` (`DateUtils.toLocalDateString`) antes do payload, já que e um `LocalDate` no backend e `JSON.stringify(Date)` sem tratamento geraria um Instant completo.
+    - `useReceivables.save(request, receivableId?)`: sem `receivableId` cria (`POST`), informado atualiza (`PUT`). O hook não guarda mais nenhum id de rascunho internamente.
+    - `usePricingSimulation` (renomeado de `useBatchPricingSimulation`) com `results` como fonte única de verdade dos recebíveis já simulados, atualizado via upsert por `receivableId` e removido via `remove(receivableIds)`.
+  - **Fluxo & Regras de Negocio**:
+    - Simulação de recebível novo: `POST` no primeiro "Simular", `PUT` no mesmo id nos ajustes seguintes; ao concluir com sucesso, o formulário e limpo e a seção e fechada automaticamente.
+    - Simulação em lote dos recebíveis existentes: uma chamada por recebível selecionado, resultados exibidos individualmente, sem soma (decisão explícita, agregação fica para uma iteração futura).
+    - Cedente não encontrado pelo CNPJ permite cadastro inline (dialog), reaproveitando o padrão de `FormDialogContainer`.
+    - `ReceivableList` agora controla o `ReceivableForm` (visibilidade, estado do form, save) e a seleção da tabela; ao salvar um recebível novo, seleciona-o junto aos já selecionados e simula só ele.
+    - Marcar um recebível existente na tabela simula só ele; desmarcar remove só o resultado dele; nenhuma das duas ações reprocessa os demais selecionados.
+    - Trocar Data de Referência ou Moeda de Liquidação refaz a simulação de todos os recebíveis que já têm resultado, disparado diretamente nos handlers de mudança dos campos, sem `useEffect`.
+  - **Componentes & UX**:
+    - Data de Referência da Simulação e Moeda de Liquidação centralizadas em `SimulationParams`, compartilhadas entre a simulação individual e a em lote, evitando duplicar os campos.
+    - `usePricingSimulation` passam a ser o único caminho de simulação e exibição de resultado (a simulação individual isolada, que existia separada do lote, foi removida).
+    - Formulário de recebível novo escondido por padrão, exposto via botão "Simular Novo Recebível", reduzindo a carga visual inicial da tela.
+  - **Alteração no Backend**:
+    - o `PrincingResult` estava retornando o campo `term` com o valor em meses, o que poderia causar uma confusão futura, renomeei o campo para `termMonths`.

@@ -18,7 +18,7 @@ export const PrincingSimulationResult: React.FC<Props> = ({ simulation }) => {
     const isCrossCurrency = targetCurrencyCode !== simulation.currencyCode;
 
     return (
-        <Card title="Resultado da Simulacao" className="mb-3">
+        <Card title="Resultado da Simulação" className="mb-3">
             <div className="grid">
                 <div className="col-6 md:col-3">
                     <span className="block text-color-secondary text-sm">Valor de Face</span>
@@ -55,7 +55,7 @@ export const PrincingSimulationResult: React.FC<Props> = ({ simulation }) => {
                 {isCrossCurrency && (
                     <div className="col-6 md:col-3">
                         <span className="block text-color-secondary text-sm">
-                            Cambio ({simulation.currencyCode} para {targetCurrencyCode})
+                            Câmbio ({simulation.currencyCode} para {targetCurrencyCode})
                         </span>
                         <span className="font-bold">{simulation.exchangeRateUsed}</span>
                     </div>

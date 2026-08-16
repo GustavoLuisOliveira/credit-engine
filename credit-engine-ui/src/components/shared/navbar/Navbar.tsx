@@ -13,7 +13,7 @@ export const Navbar = () => {
             command: () => navigate('/'),
         },
         {
-            label: 'Moedas e Cambio',
+            label: 'Moedas e Câmbio',
             icon: <Icon icon={'currency_exchange'} className={'mr-2'} />,
             command: () => navigate('/currencies'),
         },
