@@ -233,3 +233,28 @@ A IA foi utilizada como ferramenta de apoio para:
   - **Testes Unitários (JUnit 5, AssertJ & Mockito)**:
     - `SettlementTest`/`SettlementItemTest`: validações de invariantes que espelham os `CHECK` da migration (`term > 0`, taxas `>= 0`, valores positivos, câmbio `> 0`, moedas coerentes entre os `Money` do mesmo agregado).
     - `SettlementServiceImplTest`, organizado em `@Nested` por cenário (`ExecutePreconditions`, `SameCurrencyExecution`, `CrossCurrencyExecution`, `BatchExecution`, `ConcurrencyAndIntegrity`, `SettlementQueries`): cobre as validações de pré-condição, o fluxo same-currency (sem chamar `ExchangeRateService`), o fluxo cross-currency (conversão consistente entre `faceValue`/`discountAmount`/`presentValue`), a acumulação de totais em lote com múltiplas moedas, a tradução de `DataIntegrityViolationException` em `DomainConflictException` sob concorrência (sem marcar o recebível como liquidado nesse caso), e as consultas `findById`/`findByAssignor`.
+
+---
+
+### [Feature] Moedas e Cambio (Currency, ExchangeRate) - Frontend
+- **Branch**: `feature/currency-ui`
+- **Prompts estrategicos utilizados**:
+  - "Extracão dos contratos reais de API a partir do backend: controllers, DTOs, enums e `GlobalExceptionHandler`, para gerar services e DTOs do frontend sem inventar formato de payload."
+  - "Ajuste incremental de UX no painel de cotações: busca automatica ao preencher os dois filtros (remocão do botao Buscar) e exclusão da moeda de origem das opcões de destino, aplicado tanto na consulta quanto no formulario de cadastro."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **PrimeReact 11 pareceria "mais atual", mas nao era a escolha certa**: a IA levantou que a versao mais recente era a 11.1.0, porem investigando identificou que reconstroi o motor de temas do zero (tokens em vez do `theme.css` SASS que o projeto de referencia usa). O usuario optou por travar em 10.9.8, evitando quebrar o setup de tema ja validado.
+  - **Estado de moedas duplicado**: `Currencies` e a pagina que a continha chamavam `useCurrencies()` cada uma por conta propria, gerando dois fetches e duas listas fora de sincronia entre si (uma usada no grid, outra nos selects de cotação). Corrigido subindo o estado para o componente pai e passando via props.
+  - **Resultado de cotação ficava obsoleto**: trocar a moeda de origem ou destino sem re-executar a busca mantinha na tela o resultado do par anterior, como se fosse do par atual. Corrigido com uma função `reset()` explicita no hook, disparada sempre que os filtros mudam.
+- **Analise critica**:
+  - **Onde economizou tempo**: leitura e mapeamento do projeto do backend para extrair convenções e contratos reais, em vez de ter que descrever cada endpoint e padrao manualmente; geração do scaffold completo (config, api client, Context, componentes compartilhados) validado a cada etapa.
+  - **Onde exigiu atenção humana**: O bug de estado duplicado e o de cotação obsoleta.
+- **Contexto & Decisao**:
+  - **Arquitetura & Convenções**:
+    - Estrutura de pastas por contexto de dominio (`services/currency`, `hooks/currency`, `components/currency`), espelhando o padrao ja usado no backend (`domain.model.currency`, `application.dto.currency` etc).
+    - Estado de servidor via hooks customizados (`useState`/`useEffect`/`useCallback`), sem biblioteca de cache externa (TanStack Query, SWR), seguindo o padrao real do projeto de referencia em vez da recomendação inicial da IA.
+    - Validação de formulario manual, exportada junto ao DTO (`validateCurrencyRequest`, `validateExchangeRateRequest`), sem Zod nem React Hook Form, mesmo padrao da referencia.
+    - Metodos, classes, componentes, props e tipos em ingles (`create`, `findAll`, `findLatestRate`, `TextInput`, `SelectInput`); textos exibidos ao usuario (labels, mensagens de toast, titulos de card) em portugues.
+  - **Componentes & UX**:
+    - Regra de negocio de UX aplicada tanto na consulta (`ExchangeRates`) quanto no cadastro (`FormExchangeRate`): a moeda selecionada como origem e removida das opções de destino, e o destino e limpo automaticamente se coincidir com a nova origem escolhida.
+  - **Configuração Backend**:
+    - `CorsConfig` criado no backend (`infrastructure.config`), com origem configuravel via `app.cors.allowed-origins` (relaxed binding para `APP_CORS_ALLOWED_ORIGINS`), permitindo que o `docker-compose.yml` injete a origem do frontend a partir do `.env` sem alterar codigo Java.
