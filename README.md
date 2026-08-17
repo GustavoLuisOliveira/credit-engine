@@ -75,7 +75,7 @@ cd credit-engine
 2. Crie o arquivo `.env` na raiz do projeto com as variáveis abaixo (ajuste os valores conforme necessário):
 
 ```env
-POSTGRES_USER=your_postgres_user
+POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your_postgres_password
 POSTGRES_DB=credit_engine_db
 POSTGRES_PORT=5433
