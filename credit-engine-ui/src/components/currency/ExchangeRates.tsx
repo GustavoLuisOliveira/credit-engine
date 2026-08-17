@@ -20,8 +20,8 @@ export const ExchangeRates: React.FC<Props> = ({ currencies }) => {
     const [origin, setOrigin] = useState<string>('');
     const [destination, setDestination] = useState<string>('');
 
-    const currencyOptions: SelectOption[] = currencies.map(c => ({ label: `${c.code} - ${c.name}`, value: c.code }));
-    const destinationOptions: SelectOption[] = currencyOptions.filter(option => option.value !== origin);
+    const currencyOptions: SelectOption[] = currencies?.map(c => ({ label: `${c.code} - ${c.name}`, value: c.code })) ?? [];
+    const destinationOptions: SelectOption[] = currencyOptions?.filter(option => option.value !== origin) ?? [];
 
     const handleOriginChange = (value: string) => {
         setOrigin(value);

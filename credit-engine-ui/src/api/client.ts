@@ -1,7 +1,7 @@
 import { ApiError, type ApiErrorBody } from './errors/ApiError';
 import { dateReviver } from './utils/dateReviver';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api';
 
 async function handleResponse<T>(response: Response): Promise<T> {
 

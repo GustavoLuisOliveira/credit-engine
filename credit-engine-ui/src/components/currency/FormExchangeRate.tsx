@@ -31,8 +31,8 @@ export const FormExchangeRate: React.FC<Props> = ({ visible, close, currencies, 
         setRequest({ ...EMPTY_REQUEST, rateDateTime: new Date() });
     }, [visible]);
 
-    const currencyOptions: SelectOption[] = currencies.map(c => ({ label: `${c.code} - ${c.name}`, value: c.code }));
-    const destinationOptions: SelectOption[] = currencyOptions.filter(option => option.value !== request.originCurrencyCode);
+    const currencyOptions: SelectOption[] = currencies?.map(c => ({ label: `${c.code} - ${c.name}`, value: c.code }));
+    const destinationOptions: SelectOption[] = currencyOptions?.filter(option => option.value !== request.originCurrencyCode);
 
     const handleOriginChange = (value: string) => {
         setRequest(prev => ({

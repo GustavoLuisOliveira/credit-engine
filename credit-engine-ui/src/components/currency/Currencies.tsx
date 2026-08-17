@@ -33,7 +33,7 @@ export const Currencies: React.FC<Props> = ({ currencies, loading, creating, cre
             >
                 {loading ? (
                     <Loading />
-                ) : currencies.length === 0 ? (
+                ) : currencies?.length === 0 ? (
                     <EmptyState message="Nenhuma moeda cadastrada." />
                 ) : (
                     <DataTable value={currencies} stripedRows dataKey="code" rowClassName={() => 'text-sm'}>
