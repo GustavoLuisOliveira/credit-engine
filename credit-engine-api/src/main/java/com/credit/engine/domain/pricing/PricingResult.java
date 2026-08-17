@@ -1,4 +1,4 @@
-package com.credit.engine.domain.princing;
+package com.credit.engine.domain.pricing;
 
 import com.credit.engine.domain.shared.money.Money;
 
