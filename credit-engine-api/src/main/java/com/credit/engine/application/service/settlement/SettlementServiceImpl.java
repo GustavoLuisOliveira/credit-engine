@@ -1,6 +1,7 @@
 package com.credit.engine.application.service.settlement;
 
 import com.credit.engine.application.dto.currency.ExchangeRateResponse;
+import com.credit.engine.application.dto.settlement.SettlementExtractResponse;
 import com.credit.engine.application.dto.settlement.SettlementRequest;
 import com.credit.engine.application.dto.settlement.SettlementResponse;
 import com.credit.engine.application.service.currency.ExchangeRateService;
@@ -27,6 +28,8 @@ import com.credit.engine.infrastructure.persistence.repository.settlement.Settle
 import com.credit.engine.infrastructure.persistence.repository.settlement.SettlementRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -244,6 +247,14 @@ public class SettlementServiceImpl implements SettlementService {
                     )
                 )
                 .toList();
+    }
+
+    @Override
+    public Page<SettlementExtractResponse> extract(UUID assignorId, String currencyCode, LocalDate valuationDateFrom, LocalDate valuationDateTo, Pageable pageable) {
+        String normalizedCurrencyCode = currencyCode != null ? currencyCode.toUpperCase() : null;
+        return settlementRepository
+                .findExtract(assignorId, normalizedCurrencyCode, valuationDateFrom, valuationDateTo, pageable)
+                .map(SettlementExtractResponse::toResponse);
     }
 }
 
