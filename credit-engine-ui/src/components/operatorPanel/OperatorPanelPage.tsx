@@ -11,17 +11,23 @@ import { AssignorSearch } from '../assignor/AssignorSearch.tsx';
 import { ReceivableList } from '../receivable/ReceivableList.tsx';
 import { PrincingSimulationParams } from '../princing/PrincingSimulationParams.tsx';
 import {usePricingSimulation} from "../../hooks/princing/usePricingSimulation.ts";
+import {useSettlements} from "../../hooks/settlement/useSettlements.ts";
+import {SettlementActions} from "../settlement/SettlementActions.tsx";
+import {SettlementResultDialog} from "../settlement/SettlementResultDialog.tsx";
 
 export const OperatorPanel: React.FC = () => {
     const { currencies } = useCurrencies();
     const assignorSearch = useAssignors();
     const receivableHook = useReceivables();
     const princingSimulation = usePricingSimulation();
+    const settlements = useSettlements();
 
     const [valuationDate, setValuationDate] = useState<Date | null>(new Date());
     const [targetCurrencyCode, setTargetCurrencyCode] = useState<string>('');
 
     const assignorId = assignorSearch.assignor?.id ?? null;
+
+    const [selectedReceivableIds, setSelectedReceivableIds] = useState<string[]>([]);
 
     // Assim que o cedente e encontrado/cadastrado, carrega os recebíveis dele
     // para permitir a simulação (individual ou em lote) dos que ja estao em aberto.
@@ -34,25 +40,28 @@ export const OperatorPanel: React.FC = () => {
         princingSimulation.simulate(receivableIds, valuationDate, targetCurrencyCode);
     };
 
-    // Data de referência e moeda de liquidação afetam o resultado de tudo que
-    // ja foi simulado, entao qualquer alteração aqui refaz a simulação dos
-    // recebíveis ja simulados (sem useEffect, disparado direto no handler).
     const handleValuationDateChange = (date: Date | null) => {
         setValuationDate(date);
 
-        const simulatedIds = princingSimulation.results.map(r => r.receivableId);
-        if (simulatedIds.length > 0) {
-            princingSimulation.simulate(simulatedIds, date, targetCurrencyCode);
+        if (selectedReceivableIds.length > 0) {
+            princingSimulation.simulate(selectedReceivableIds, date, targetCurrencyCode);
         }
     };
 
     const handleTargetCurrencyCodeChange = (code: string) => {
         setTargetCurrencyCode(code);
 
-        const simulatedIds = princingSimulation.results.map(r => r.receivableId);
-        if (simulatedIds.length > 0) {
-            princingSimulation.simulate(simulatedIds, valuationDate, code);
+        if (selectedReceivableIds.length > 0) {
+            princingSimulation.simulate(selectedReceivableIds, valuationDate, code);
         }
+    };
+
+    // Apos liquidar, o cedente permanece selecionado. Recarrega os
+    // recebíveis (os liquidados saem da lista de abertos) e descarta os
+    // resultados de simulacao, ja que os recebíveis simulados foram liquidados.
+    const handleSettled = () => {
+        if (assignorId) receivableHook.findByAssignor(assignorId);
+        princingSimulation.reset();
     };
 
     const handleNewOperation = () => {
@@ -61,6 +70,7 @@ export const OperatorPanel: React.FC = () => {
         assignorSearch.reset();
         receivableHook.reset();
         princingSimulation.reset();
+        setSelectedReceivableIds([]);
     };
 
     return (
@@ -119,10 +129,25 @@ export const OperatorPanel: React.FC = () => {
                     onReceivableSaved={() => receivableHook.findByAssignor(assignorId)}
                     onSimulate={handleSimulate}
                     onRemoveSimulate={princingSimulation.remove}
+                    onSelectionChange={setSelectedReceivableIds}
                 />
             )}
 
             <BatchPrincingSimulationResults simulating={princingSimulation.simulating} results={princingSimulation.results} />
+
+            {assignorId && valuationDate && !princingSimulation.simulating && princingSimulation.results.length > 0 && (
+                <SettlementActions
+                    assignorId={assignorId}
+                    valuationDate={valuationDate}
+                    targetCurrencyCode={targetCurrencyCode}
+                    results={princingSimulation.results}
+                    executing={settlements.executing}
+                    execute={settlements.execute}
+                    onSettled={handleSettled}
+                />
+            )}
+
+            <SettlementResultDialog settlement={settlements.settlement} onHide={settlements.closeResult} />
         </>
     );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -25,6 +25,7 @@ interface Props {
     onReceivableSaved: () => void;
     onSimulate: (receivableIds: string[]) => void;
     onRemoveSimulate: (receivableIds: string[]) => void;
+    onSelectionChange?: (receivableIds: string[]) => void;
 }
 
 const emptyReceivable = (assignorId: string): ReceivableRequest => ({
@@ -49,6 +50,7 @@ export const ReceivableList: React.FC<Props> = ({
                                                     onReceivableSaved,
                                                     onSimulate,
                                                     onRemoveSimulate,
+                                                    onSelectionChange
                                                 }) => {
     const [selected, setSelected] = useState<ReceivableResponse[]>([]);
     const [formVisible, setFormVisible] = useState(false);
@@ -57,6 +59,17 @@ export const ReceivableList: React.FC<Props> = ({
     // A listagem traz todos os recebíveis do cedente. Aqui filtramos apenas
     // os em aberto, ja que liquidados/cancelados nao entram na simulacao.
     const openReceivables = receivables.filter(r => r.status === 'UNSETTLED');
+
+    // Quando a lista e recarregada (ex: apos uma liquidacao), recebíveis
+    // liquidados saem de openReceivables. Descarta a selecao desses itens
+    // para nao manter ids fantasmas que nao existem mais na tabela.
+    useEffect(() => {
+        setSelected(prev => prev.filter(r => openReceivables.some(o => o.id === r.id)));
+    }, [openReceivables, receivables]);
+
+    useEffect(() => {
+        onSelectionChange?.(selected.map(r => r.id));
+    }, [onSelectionChange, selected]);
 
     // Simetrico ao marcar/desmarcar: um item novo na selecao e simulado na
     // hora, um item removido da selecao tem seu resultado descartado na hora.
