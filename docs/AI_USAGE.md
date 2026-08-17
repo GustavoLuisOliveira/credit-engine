@@ -381,3 +381,23 @@ A IA foi utilizada como ferramenta de apoio para:
   - **Componentes & UX**:
     - `SettlementExtractPage`: `DataTable` em modo `lazy` com paginação server-side, botão "ver itens" por linha abrindo o `SettlementResultDialog` via `findById`.
     - Nova rota `/settlements/extract` e item "Extrato de Liquidação" no `Navbar`.
+
+---
+
+### [Feature] Tela de Parametros de Precificacao (Cadastro e Consulta)
+- **Branch**: `feature/pricing-parameter-ui`
+- **Prompts estrategicos utilizados**:
+  - "Discussao de decisao antes de codar: substituir o cadastro de parametros de precificacao via curl (documentado no README) por uma tela propria no frontend, com opcao de mostrar so o vigente ou vigente mais historico, e definicao de onde a tela entra na navegacao."
+  - "Levantamento do padrao existente no frontend antes de gerar codigo novo: leitura de `CurrencyPage`, `Currencies`, `ExchangeRates`, `FormExchangeRate`, `useCurrencies`, `useExchangeRates`, `currency.service.ts`, `exchangeRate.service.ts`, `SettlementExtractPage` e dos inputs compartilhados (`SelectInput`, `NumberInput`, `DateInput`, `FormDialogContainer`), para replicar exatamente a mesma estrutura de camadas (service, hook, componentes) em vez de propor um padrao novo."
+  - "Geracao da feature completa (DTO, service, hook, componentes de card vigente, form de cadastro, tabela de historico e pagina) entregue como zip preservando a estrutura de pastas do projeto, incluindo os arquivos existentes que precisavam ser alterados (`router.tsx`, `Navbar.tsx`)."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **Tratamento de ausencia de parametro vigente**: a primeira versao do hook tratava qualquer erro nas chamadas de `/current` de forma generica; ajustado para tratar especificamente o status 404 (nenhum parametro vigente cadastrado para o tipo) sem propagar como erro de toast, mantendo os demais erros visiveis.
+- **Analise critica**:
+  - **Onde economizou tempo**: reaproveitar os padroes ja existentes (`FormDialogContainer`, `SelectInput`/`NumberInput`/`DateInput`, `useCurrencies` como referencia de hook) tornou a geracao da tela praticamente mecanica, sem necessidade de decisões novas de UX.
+- **Contexto & Decisao**:
+  - **Arquitetura & Convenções (Frontend)**:
+    - Novos arquivos em `services/pricing/dto` (`PricingParameterRequest`, `PricingParameterResponse`), `services/pricing/pricingParameter.service.ts` (`create`, `findCurrent`, `findHistory`), `hooks/pricing/usePricingParameters.ts` e `components/pricing/*`, seguindo a mesma separacao de camadas (service HTTP puro, hook com estado e regras de exibicao, componentes de apresentacao) usada em `currency`.
+    - `usePricingParameters` carrega o parametro vigente dos dois tipos de recebivel em paralelo (`Promise.all`) e o historico de um tipo selecionado por vez, ja que o endpoint de historico exige o tipo como parametro obrigatorio.
+  - **Componentes & UX**:
+    - `PricingParametersPage`: um `Card` com os parametros vigentes lado a lado (um por tipo de recebivel), um `Card` com o historico em `DataTable` filtravel por tipo, e um `FormDialogContainer` para cadastro de novo parametro, seguindo o mesmo padrao visual de `CurrencyPage`.
+    - Nova rota `/pricing-parameters` e item "Parametros de Precificacao" no `Navbar`.

@@ -2,8 +2,8 @@ import React from 'react';
 import { Card } from 'primereact/card';
 import { Message } from 'primereact/message';
 import {PrincingSimulationResult} from "./PrincingSimulationResult.tsx";
-import type { BatchPrincingSimulationResult } from "../../hooks/princing/usePricingSimulation.ts";
-import {Loading} from "../shared/Loading.tsx";
+import type { BatchPrincingSimulationResult } from "../../../hooks/princing/usePricingSimulation.ts";
+import {Loading} from "../../shared/Loading.tsx";
 
 interface Props {
     simulating: boolean;

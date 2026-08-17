@@ -4,6 +4,7 @@ import ErrorPage from '../components/shared/error/ErrorPage';
 import {CurrencyPage} from "../components/currency/CurrencyPage.tsx";
 import {OperatorPanel} from "../components/operatorPanel/OperatorPanelPage.tsx";
 import {SettlementExtractPage} from "../components/settlement/SettlementExtractPage.tsx";
+import {PricingParametersPage} from "../components/princing/PricingParametersPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -21,6 +22,10 @@ export const router = createBrowserRouter([
             {
                 path: '/settlements/extract',
                 element: <SettlementExtractPage />,
+            },
+            {
+                path: '/pricing-parameters',
+                element: <PricingParametersPage />,
             },
         ],
         errorElement: <ErrorPage />,

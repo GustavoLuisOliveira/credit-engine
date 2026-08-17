@@ -140,7 +140,7 @@ public class SettlementServiceImpl implements SettlementService {
 
         // Busca a taxa (base + spread) vigente para o tipo do recebível na data de valoração
         PricingParameter parameter = pricingParameterMapper.toDomain(
-                pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+                pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                         receivable.getType(), valuationDate
                 ).orElseThrow(() -> new DomainNotFoundException("Nenhum parâmetro de precificação vigente para: " + receivable.getType()))
         );

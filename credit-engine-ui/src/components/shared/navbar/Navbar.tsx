@@ -22,6 +22,11 @@ export const Navbar = () => {
             icon: <Icon icon={'currency_exchange'} className={'mr-2'} />,
             command: () => navigate('/currencies'),
         },
+        {
+            label: 'Parâmetros de Precificação',
+            icon: <Icon icon={'tune'} className={'mr-2'} />,
+            command: () => navigate('/pricing-parameters'),
+        },
     ];
 
     return (

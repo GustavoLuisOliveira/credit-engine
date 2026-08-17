@@ -220,7 +220,7 @@ class SettlementServiceImplTest {
             stubReceivable(receivableId, receivable);
             when(settlementItemRepository.existsByReceivableId(receivableId)).thenReturn(false);
             // Arrange: nenhum PricingParameter vigente para o tipo do recebível na data de valoração
-            when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+            when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                     ReceivableType.COMMERCIAL_INVOICE, VALUATION_DATE)).thenReturn(Optional.empty());
 
             SettlementRequest request = buildRequest("BRL", receivableId);
@@ -548,7 +548,7 @@ class SettlementServiceImplTest {
         );
 
         // Repositório retorna a entidade; mapper traduz para o parâmetro de domínio
-        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 type, VALUATION_DATE)).thenReturn(Optional.of(parameterEntity));
         when(pricingParameterMapper.toDomain(parameterEntity)).thenReturn(parameter);
 

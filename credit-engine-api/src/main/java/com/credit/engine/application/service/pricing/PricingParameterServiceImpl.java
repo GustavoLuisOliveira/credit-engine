@@ -35,7 +35,7 @@ public class PricingParameterServiceImpl implements PricingParameterService {
 
     @Override
     public PricingParameterResponse findCurrent(ReceivableType receivableType) {
-        var entity = pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        var entity = pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 receivableType, LocalDate.now()
         ).orElseThrow(() -> new DomainNotFoundException("Nenhum parâmetro de precificação vigente para: " + receivableType));
 
@@ -44,7 +44,7 @@ public class PricingParameterServiceImpl implements PricingParameterService {
 
     @Override
     public List<PricingParameterResponse> findHistory(ReceivableType receivableType) {
-        return pricingParameterRepository.findByReceivableTypeOrderByEffectiveDateDesc(receivableType).stream()
+        return pricingParameterRepository.findByReceivableTypeOrderByEffectiveDateDescCreatedAtDesc(receivableType).stream()
                 .map(pricingParameterMapper::toDomain)
                 .map(PricingParameterResponse::toResponse)
                 .toList();

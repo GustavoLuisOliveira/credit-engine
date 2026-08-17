@@ -81,7 +81,7 @@ class PricingCalculationServiceImplTest {
         );
 
         when(receivableRepository.findById(receivableId)).thenReturn(Optional.of(receivableEntity));
-        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 ReceivableType.COMMERCIAL_INVOICE, valuationDate))
                 .thenReturn(Optional.of(parameterEntity));
 
@@ -112,7 +112,7 @@ class PricingCalculationServiceImplTest {
         );
 
         when(receivableRepository.findById(receivableId)).thenReturn(Optional.of(receivableEntity));
-        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 ReceivableType.COMMERCIAL_INVOICE, valuationDate))
                 .thenReturn(Optional.of(parameterEntity));
 
@@ -139,7 +139,7 @@ class PricingCalculationServiceImplTest {
         );
 
         when(receivableRepository.findById(receivableId)).thenReturn(Optional.of(receivableEntity));
-        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 ReceivableType.COMMERCIAL_INVOICE, valuationDate))
                 .thenReturn(Optional.of(parameterEntity));
 
@@ -176,7 +176,7 @@ class PricingCalculationServiceImplTest {
         );
 
         when(receivableRepository.findById(receivableId)).thenReturn(Optional.of(receivableEntity));
-        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 ReceivableType.POST_DATED_CHECK, valuationDate))
                 .thenReturn(Optional.of(parameterEntity));
 
@@ -189,7 +189,7 @@ class PricingCalculationServiceImplTest {
 
         // Confirma que o repository foi consultado com o tipo correto (prova que o resolver
         // não "vazou" pra estratégia errada nem pegou parâmetro do tipo errado)
-        verify(pricingParameterRepository).findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        verify(pricingParameterRepository).findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 ReceivableType.POST_DATED_CHECK, valuationDate);
     }
 
@@ -215,7 +215,7 @@ class PricingCalculationServiceImplTest {
 
         when(receivableRepository.findById(receivableId)).thenReturn(Optional.of(receivableEntity));
 
-        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 ReceivableType.COMMERCIAL_INVOICE, valuationDate))
                 .thenReturn(Optional.empty());
 

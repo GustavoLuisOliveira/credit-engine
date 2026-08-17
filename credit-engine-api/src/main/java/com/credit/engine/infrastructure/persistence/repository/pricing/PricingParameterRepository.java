@@ -15,10 +15,10 @@ public interface PricingParameterRepository extends JpaRepository<PricingParamet
      * Busca a taxa vigente para o tipo de recebível na data de referência.
      * Retorna o registro mais recente com data efetiva menor ou igual à data informada.
      */
-    Optional<PricingParameterEntity> findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+    Optional<PricingParameterEntity> findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
             ReceivableType receivableType, LocalDate referenceDate
     );
 
-    List<PricingParameterEntity> findByReceivableTypeOrderByEffectiveDateDesc(ReceivableType receivableType);
+    List<PricingParameterEntity> findByReceivableTypeOrderByEffectiveDateDescCreatedAtDesc(ReceivableType receivableType);
 
 }
