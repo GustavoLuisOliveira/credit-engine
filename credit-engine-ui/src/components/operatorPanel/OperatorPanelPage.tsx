@@ -33,7 +33,6 @@ export const OperatorPanel: React.FC = () => {
     // para permitir a simulação (individual ou em lote) dos que ja estao em aberto.
     useEffect(() => {
         if (assignorId) receivableHook.findByAssignor(assignorId);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [assignorId]);
 
     const handleSimulate = (receivableIds: string[]) => {

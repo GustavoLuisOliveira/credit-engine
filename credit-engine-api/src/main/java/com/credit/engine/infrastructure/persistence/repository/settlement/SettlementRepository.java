@@ -36,11 +36,10 @@ public interface SettlementRepository extends JpaRepository<SettlementEntity, UU
             s.total_net_amount AS totalNetAmount
         FROM settlement s
         JOIN assignor a ON a.id = s.assignor_id
-        WHERE (:assignorId IS NULL OR s.assignor_id = :assignorId)
-          AND (:currencyCode IS NULL OR s.target_currency_id = :currencyCode)
-          AND (:valuationDateFrom IS NULL OR s.valuation_date >= :valuationDateFrom)
-          AND (:valuationDateTo IS NULL OR s.valuation_date <= :valuationDateTo)
-        ORDER BY s.valuation_date DESC, s.settlement_date_time DESC
+        WHERE (CAST(:assignorId AS uuid) IS NULL OR s.assignor_id = CAST(:assignorId AS uuid))
+            AND (CAST(:currencyCode AS varchar) IS NULL OR s.target_currency_id = CAST(:currencyCode AS varchar))
+            AND (CAST(:valuationDateFrom AS date) IS NULL OR s.valuation_date >= CAST(:valuationDateFrom AS date))
+            AND (CAST(:valuationDateTo AS date) IS NULL OR s.valuation_date <= CAST(:valuationDateTo AS date))
     """,
     countQuery = """
         SELECT count(*)

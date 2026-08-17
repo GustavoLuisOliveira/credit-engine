@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -35,9 +36,14 @@ public class AssignorController {
         return ResponseEntity.ok(assignorService.findById(id));
     }
 
-    @GetMapping
+    @GetMapping(params = "documentNumber")
     public ResponseEntity<AssignorResponse> findByDocumentNumber(@RequestParam String documentNumber) {
         return ResponseEntity.ok(assignorService.findByDocumentNumber(documentNumber));
+    }
+
+    @GetMapping
+    public List<AssignorResponse> findAll() {
+        return assignorService.findAll();
     }
 
 }

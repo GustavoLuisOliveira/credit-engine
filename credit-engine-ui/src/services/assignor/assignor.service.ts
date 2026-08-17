@@ -7,6 +7,10 @@ const controllerUrl = '/assignors';
 
 export const assignorService = {
 
+    findAll() {
+        return http.get<AssignorResponse[]>(controllerUrl);
+    },
+
     findByDocumentNumber(documentNumber: string) {
         const digitsOnly = stripDocumentNumberMask(documentNumber);
         return http.get<AssignorResponse>(`${controllerUrl}?documentNumber=${digitsOnly}`);

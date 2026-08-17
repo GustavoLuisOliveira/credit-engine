@@ -335,3 +335,49 @@ A IA foi utilizada como ferramenta de apoio para:
     - `SettlementActions`: botão de liquidação, só renderizado quando há ao menos um recebível simulado com sucesso, com o total selecionado no próprio label do botão.
   - **Componentes & UX**:
     - `SettlementResultDialog`: modal com totais consolidados na moeda alvo e tabela de itens (valor de face, prazo, taxa total, deságio, valor presente e câmbio na moeda original; valor liquidado na moeda de liquidação).
+
+---
+
+### [Feature] Extrato de Liquidação (Consulta Analítica)
+- **Branch**: `feature/settlement-extract`
+- **Prompts estrategicos utilizados**:
+  - "Implementação do Extrato de Liquidação (requisito de Consultas Analíticas: filtro por período, cedente e tipo de moeda, com uso de Query Builder ou SQL nativo em vez de ORM puro para performance), a partir das migrations reais (V2 a V6) enviadas para garantir nomes de coluna e tipos corretos."
+  - "Levantamento de decisões antes de codar: granularidade do extrato (cabeçalho vs item), campo de data para o filtro de período (`valuationDate` vs `settlementDateTime`) e abordagem de query (`JdbcTemplate`, Query Builder tipado ou native query no repository)."
+  - "Revisão de decisão de camadas: inicialmente a IA propôs um controller dedicado chamando o repository direto (com base numa leitura literal do README de pacotes, que permite relatório em 2 camadas); corrigido a pedido para manter o extrato passando pela camada de serviço, como o resto do sistema, e integrado ao `SettlementController` existente em vez de um controller novo."
+  - "Implementação do frontend do extrato: levantamento de decisões antes de codar (navegação via rota nova + item no Navbar, filtro de cedente como select, drill-down de itens reaproveitando o `SettlementResultDialog` já existente)."
+  - "Identificado bloqueio técnico: não existia endpoint de listagem completa de cedentes para popular o select de filtro. Adicionado `GET /api/assignors` (sem `documentNumber`), convivendo com o endpoint de busca por CNPJ já existente no mesmo path."
+  - "Troca do input de período por um componente de range único (`DateRangeInput`, do PrimeReact Calendar) fornecido pronto, substituindo os dois `DateInput` separados de 'de'/'até'."
+  - "Investigação de erro em runtime (log de produção) na query nativa do extrato: `could not determine data type of parameter`."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **Camadas do relatório**: primeira proposta violava a direção de dependência `web -> application -> infrastructure` ao fazer o controller chamar o `SettlementRepository` direto, justificada pela permissão (não obrigação) do README de pacotes de relatórios terem só 2 camadas. Corrigido: `SettlementController` (endpoint) -> `SettlementService.extract()` (normaliza filtro de moeda e mapeia a projection) -> `SettlementRepository.findExtract()` (query nativa). A query nativa continua fora da camada de negócio, mas o controller não depende mais de `infrastructure` diretamente.
+  - **Índice ausente para o filtro de período**: `settlement` só tinha índice em `assignor_id` e em `settlement_date_time`; o filtro de período do extrato usa `valuation_date`, que não tinha índice próprio. Adicionada migration `V7` com índice simples em `valuation_date` (caso sem cedente) e composto `(assignor_id, valuation_date)` (caso cedente + período, o combo mais comum de uso).
+  - **Ambiguous mapping em potencial no `AssignorController`**: o endpoint novo `GET /api/assignors` (listar todos) usa o mesmo path e verbo do endpoint já existente `GET /api/assignors?documentNumber=`. Resolvido anotando o método existente com `@GetMapping(params = "documentNumber")`, deixando o novo como fallback sem essa condição, evitando erro de mapeamento ambíguo no startup do Spring.
+- **Analise critica**:
+  - **Onde economizou tempo**: com as migrations reais em mãos, para criar a query nativa (colunas, FKs, tipos); reaproveitar o `SettlementResultDialog` e o padrão do `useCurrencies` para o `useAssignorOptions` evitou recriar componentes/hooks do zero no frontend.
+  - **Onde exigiu atenção humana**: as duas decisões de camada (controller chamando repository direto, e a possibilidade de expor a projection) precisaram de correção explícita; o bug de tipo de parâmetro na query nativa só foi descoberto rodando contra o Postgres real (log de produção).
+- **Contexto & Decisao**:
+  - **Arquitetura & Convenções (Backend)**:
+    - Fluxo em 3 camadas igual ao resto do sistema: `web.controller.settlement.SettlementController` -> `application.service.settlement.SettlementService` -> `infrastructure.persistence.repository.settlement.SettlementRepository`, sem controller nem service dedicados só para o relatório.
+    - `SettlementExtractProjection` (interface projection do Spring Data) fica restrita à camada de persistência; nunca cruza para `application`/`web`.
+    - `SettlementExtractResponse` (record em `application.dto.settlement`) é o contrato estável de resposta, com `toResponse(SettlementExtractProjection)` fazendo a tradução.
+    - `SettlementRepository.findExtract` usa `@Query(nativeQuery = true)` com `countQuery` explícita, filtros opcionais via `(CAST(:param AS tipo) IS NULL OR coluna = CAST(:param AS tipo))`, evitando montar SQL condicional em Java e evitando o erro de tipo indeterminado do Postgres em parâmetro nulo.
+    - `AssignorController` passou a expor dois `GET /api/assignors` distintos via `params = "documentNumber"` no método existente, sem quebrar o contrato já usado pelo Painel do Operador.
+  - **Fluxo & Regras de Negocio**:
+    - Granularidade do extrato: um registro por cabeçalho de `Settlement` (não por item). Drill-down dos itens de um settlement reaproveita o `GET /api/settlements/{id}` já existente, sem endpoint novo.
+    - Filtro de período usa `valuationDate` (data de referência da precificação), não `settlementDateTime`.
+    - Filtro de moeda usa `targetCurrencyId` (moeda de liquidação do cabeçalho), já que um lote pode conter títulos de moedas originais diferentes;
+    - Todos os filtros (`assignorId`, `currencyCode`, `valuationDateFrom`, `valuationDateTo`) são opcionais; paginação via `page`/`size`, ordenação fixa por `valuationDate DESC, settlementDateTime DESC`.
+    - Cedente do filtro do extrato é selecionado a partir de uma listagem completa (sem paginação por enquanto), diferente do fluxo de busca por CNPJ do Painel do Operador.
+  - **Endpoints**:
+    - `GET /api/settlements/extract?assignorId=&currencyCode=&valuationDateFrom=&valuationDateTo=&page=&size=`, adicionado ao `SettlementController` existente junto dos demais endpoints de settlement.
+    - `GET /api/assignors` (sem `documentNumber`), listagem completa para popular o select de cedente do extrato.
+  - **Banco de Dados**:
+    - Migration `V7__create_settlement_extract_indexes.sql`: índice em `settlement (valuation_date DESC)` e índice composto em `settlement (assignor_id, valuation_date DESC)`.
+  - **Arquitetura & Convenções (Frontend)**:
+    - `PageResponse<T>` genérico em `services/shared/dto`, espelhando o `Page<T>` do Spring Data, reutilizável por qualquer endpoint paginado futuro.
+    - `useAssignorOptions` separado de `useAssignors`: mesmo padrão do `useCurrencies` (carrega tudo no mount), dedicado a popular selects, sem misturar com o fluxo de busca por CNPJ/cadastro inline do Painel do Operador.
+    - `useSettlements.findById` reaproveita o mesmo estado (`settlement`) já usado após `execute()`, para o `SettlementResultDialog` servir tanto o resultado de uma liquidação recém executada ou de uma linha do extrato.
+    - `useSettlementExtract` centraliza filtro e paginação server-side; qualquer mudança de filtro volta para a página 0, já que a página atual pode não existir mais no resultado filtrado.
+  - **Componentes & UX**:
+    - `SettlementExtractPage`: `DataTable` em modo `lazy` com paginação server-side, botão "ver itens" por linha abrindo o `SettlementResultDialog` via `findById`.
+    - Nova rota `/settlements/extract` e item "Extrato de Liquidação" no `Navbar`.
