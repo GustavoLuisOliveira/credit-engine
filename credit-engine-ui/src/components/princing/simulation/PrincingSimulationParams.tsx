@@ -1,8 +1,8 @@
 import React from 'react';
-import { DateInput } from '../shared/form/inputs/DateInput.tsx';
-import { SelectInput } from '../shared/form/inputs/SelectInput.tsx';
-import type CurrencyResponse from '../../services/currency/dto/CurrencyResponse.ts';
-import type { SelectOption } from '../shared/form/models/SelectOption.ts';
+import { DateInput } from '../../shared/form/inputs/DateInput.tsx';
+import { SelectInput } from '../../shared/form/inputs/SelectInput.tsx';
+import type CurrencyResponse from '../../../services/currency/dto/CurrencyResponse.ts';
+import type { SelectOption } from '../../shared/form/models/SelectOption.ts';
 
 interface Props {
     currencies: CurrencyResponse[];

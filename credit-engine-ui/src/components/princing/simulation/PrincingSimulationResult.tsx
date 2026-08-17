@@ -1,8 +1,8 @@
 import React from 'react';
 import { Card } from 'primereact/card';
 import { Divider } from 'primereact/divider';
-import type PricingSimulationResponse from '../../services/pricing/dto/PricingSimulationResponse.ts';
-import MoneyUtils from '../../utils/MoneyUtils.ts';
+import type PricingSimulationResponse from '../../../services/pricing/dto/PricingSimulationResponse.ts';
+import MoneyUtils from '../../../utils/MoneyUtils.ts';
 
 interface Props {
     simulation: PricingSimulationResponse;

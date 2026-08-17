@@ -68,7 +68,7 @@ class PricingParameterServiceImplTest {
                 ReceivableType.COMMERCIAL_INVOICE, new BigDecimal("0.10"), new BigDecimal("0.015"), LocalDate.now()
         );
 
-        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 eq(ReceivableType.COMMERCIAL_INVOICE), any(LocalDate.class)))
                 .thenReturn(Optional.of(entity));
 
@@ -83,7 +83,7 @@ class PricingParameterServiceImplTest {
     @DisplayName("Deve lançar DomainNotFoundException quando não houver parâmetro vigente cadastrado para o tipo informado")
     void shouldThrowWhenNoCurrentParameterExists() {
         // Dado que não existe parâmetro cadastrado para o tipo POST_DATED_CHECK na data informada
-        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+        when(pricingParameterRepository.findFirstByReceivableTypeAndEffectiveDateLessThanEqualOrderByEffectiveDateDescCreatedAtDesc(
                 eq(ReceivableType.POST_DATED_CHECK), any(LocalDate.class)))
                 .thenReturn(Optional.empty());
 
@@ -100,7 +100,7 @@ class PricingParameterServiceImplTest {
                 ReceivableType.COMMERCIAL_INVOICE, new BigDecimal("0.10"), new BigDecimal("0.015"), LocalDate.now()
         );
 
-        when(pricingParameterRepository.findByReceivableTypeOrderByEffectiveDateDesc(ReceivableType.COMMERCIAL_INVOICE))
+        when(pricingParameterRepository.findByReceivableTypeOrderByEffectiveDateDescCreatedAtDesc(ReceivableType.COMMERCIAL_INVOICE))
                 .thenReturn(List.of(entity));
 
         // Quando busca o histórico do tipo informado
