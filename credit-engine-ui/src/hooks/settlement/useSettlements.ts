@@ -7,6 +7,7 @@ import { settlementService } from '../../services/settlement/settlement.service.
 
 export function useSettlements() {
     const toast = useToast();
+    const [loading, setLoading] = useState(false);
     const [executing, setExecuting] = useState(false);
     const [settlement, setSettlement] = useState<SettlementResponse | null>(null);
 
@@ -41,6 +42,20 @@ export function useSettlements() {
             .finally(() => setExecuting(false));
     }, [toast]);
 
+    const findById = useCallback((id: string) => {
+        setLoading(true);
+        return settlementService.findById(id)
+            .then(found => {
+                setSettlement(found);
+                return found;
+            })
+            .catch(e => {
+                toast.error({ detail: e.message });
+                return null;
+            })
+            .finally(() => setLoading(false));
+    }, [toast]);
+
     const closeResult = useCallback(() => {
         setSettlement(null);
     }, []);
@@ -50,5 +65,7 @@ export function useSettlements() {
         settlement,
         execute,
         closeResult,
+        findById,
+        loading
     };
 }

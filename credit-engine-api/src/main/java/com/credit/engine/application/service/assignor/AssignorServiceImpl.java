@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -81,6 +82,14 @@ public class AssignorServiceImpl implements AssignorService {
                 .orElseThrow(() -> new DomainNotFoundException("Cedente não encontrado para o CNPJ: " + cnpj.formatted()));
 
         return AssignorResponse.toResponse(assignorMapper.toDomain(entity));
+    }
+
+    @Override
+    public List<AssignorResponse> findAll() {
+        return assignorRepository.findAll().stream()
+                .map(assignorMapper::toDomain)
+                .map(AssignorResponse::toResponse)
+                .toList();
     }
 
 }

@@ -13,6 +13,11 @@ export const Navbar = () => {
             command: () => navigate('/'),
         },
         {
+            label: 'Extrato de Liquidações',
+            icon: <Icon icon={'history'} className={'mr-2'} />,
+            command: () => navigate('/settlements/extract'),
+        },
+        {
             label: 'Moedas e Câmbio',
             icon: <Icon icon={'currency_exchange'} className={'mr-2'} />,
             command: () => navigate('/currencies'),

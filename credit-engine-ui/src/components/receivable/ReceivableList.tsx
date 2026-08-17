@@ -64,8 +64,11 @@ export const ReceivableList: React.FC<Props> = ({
     // liquidados saem de openReceivables. Descarta a selecao desses itens
     // para nao manter ids fantasmas que nao existem mais na tabela.
     useEffect(() => {
-        setSelected(prev => prev.filter(r => openReceivables.some(o => o.id === r.id)));
-    }, [openReceivables, receivables]);
+        setSelected(prev => {
+            const pruned = prev.filter(r => openReceivables.some(o => o.id === r.id));
+            return pruned.length === prev.length ? prev : pruned;
+        });
+    }, [receivables]);
 
     useEffect(() => {
         onSelectionChange?.(selected.map(r => r.id));
