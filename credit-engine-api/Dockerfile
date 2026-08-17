@@ -7,6 +7,9 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 COPY src ./src
+
+# Roda os testes antes do empacotamento. Falha o build se algum teste quebrar.
+RUN mvn clean test -B
 RUN mvn clean package -DskipTests -B
 
 # Etapa de runtime
