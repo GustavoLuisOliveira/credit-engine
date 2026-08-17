@@ -13,10 +13,10 @@ export const validateCurrencyRequest = (request: CurrencyRequest): { message: st
         errors.push({ message: 'O código da moeda deve possuir exatamente 3 letras (ex: BRL, USD).' });
 
     if (ValidationUtils.isBlank(request.name))
-        errors.push({ message: 'O nome da moeda e obrigatório.' });
+        errors.push({ message: 'O nome da moeda é obrigatório.' });
 
     if (ValidationUtils.isBlank(request.symbol))
-        errors.push({ message: 'O simbolo da moeda e obrigatório.' });
+        errors.push({ message: 'O simbolo da moeda é obrigatório.' });
 
     return errors;
 };

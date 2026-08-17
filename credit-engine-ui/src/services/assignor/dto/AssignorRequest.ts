@@ -23,7 +23,7 @@ export const validateAssignorRequest = (request: AssignorRequest): { message: st
         errors.push({ message: 'O CNPJ deve possuir 14 dígitos validos.' });
 
     if (ValidationUtils.isBlank(request.name))
-        errors.push({ message: 'A razão social do cedente e obrigatória.' });
+        errors.push({ message: 'A razão social do cedente é obrigatória.' });
 
     if (ValidationUtils.isBlank(request.email) || !EMAIL_REGEX.test(request.email))
         errors.push({ message: 'Informe um e-mail válido para o cedente.' });
