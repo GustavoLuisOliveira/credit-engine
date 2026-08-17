@@ -18,7 +18,7 @@ export const validateSettlementRequest = (request: SettlementRequest): { message
     }
 
     if (!request.valuationDate) {
-        errors.push({ message: 'A data de referência da liquidação e obrigatória.' });
+        errors.push({ message: 'A data de referência da liquidação é obrigatória.' });
     }
 
     if (ValidationUtils.isBlank(request.targetCurrencyCode)) {

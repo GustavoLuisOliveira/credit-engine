@@ -37,7 +37,7 @@ export function usePricingSimulation() {
         }
 
         if (!valuationDate) {
-            toast.error({ detail: 'A data de referência da simulação e obrigatória.' });
+            toast.error({ detail: 'A data de referência da simulação é obrigatória.' });
             return;
         }
 

@@ -17,19 +17,19 @@ export const validateReceivableRequest = (request: ReceivableRequest): { message
         errors.push({ message: 'Selecione um cedente antes de simular.' });
 
     if (ValidationUtils.isBlank(request.type))
-        errors.push({ message: 'O tipo do recebível e obrigatório.' });
+        errors.push({ message: 'O tipo do recebível é obrigatório.' });
 
     if (ValidationUtils.isBlank(request.documentNumber))
-        errors.push({ message: 'O numero do documento do titulo e obrigatório.' });
+        errors.push({ message: 'O numero do documento do titulo é obrigatório.' });
 
     if (request.faceValue === null || request.faceValue <= 0)
         errors.push({ message: 'O valor de face deve ser maior que zero.' });
 
     if (ValidationUtils.isBlank(request.currencyCode))
-        errors.push({ message: 'A moeda do titulo e obrigatória.' });
+        errors.push({ message: 'A moeda do titulo é obrigatória.' });
 
     if (!request.dueDate)
-        errors.push({ message: 'A data de vencimento e obrigatória.' });
+        errors.push({ message: 'A data de vencimento é obrigatória.' });
 
     return errors;
 };
