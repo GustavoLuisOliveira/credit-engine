@@ -304,3 +304,34 @@ A IA foi utilizada como ferramenta de apoio para:
     - Formulário de recebível novo escondido por padrão, exposto via botão "Simular Novo Recebível", reduzindo a carga visual inicial da tela.
   - **Alteração no Backend**:
     - o `PrincingResult` estava retornando o campo `term` com o valor em meses, o que poderia causar uma confusão futura, renomeei o campo para `termMonths`.
+
+--- 
+
+### [Feature] Liquidação (Settlement e SettlementItem) - Frontend
+- **Branch**: `feature/settlement-ui`
+- **Prompts estrategicos utilizados**:
+  - "Implementação da liquidação (Settlement e SettlementItem) no Painel do Operador, seguindo o padrão já estabelecido no scaffold (client HTTP, hooks com toast, DTOs, `settlement.service.ts` espelhando `receivable.service.ts`), a partir da leitura do `OpenApi.json` real do backend."
+  - "Levantamento das decisões de UX antes de codar: onde exibir o histórico de liquidações do cedente, se a execução (irreversível, marca títulos como SETTLED) deve pedir confirmação, e o que o painel deve fazer após liquidar com sucesso."
+  - "Botão de liquidação (`SettlementActions`) habilitado apenas quando há recebíveis com simulação válida selecionados, com `ConfirmDialog` do PrimeReact antes de disparar o `POST /settlements`."
+  - "Modal de resultado (`SettlementResultDialog`) apresentando o cabeçalho do settlement (totais na moeda alvo) e a tabela de `SettlementItem` (valores na moeda original e na moeda de liquidação de cada item)."
+  - "Investigação de bug relatado: selecionar recebíveis sem moeda de liquidação escolhida e, ao selecionar a moeda depois, a simulação não ser refeita automaticamente."
+- **Onde a IA precisou de correção / pontos de atenção**:
+  - **Decisões de UX levantadas antes de codar**: execução exige confirmação via `ConfirmDialog`, e o resultado é apresentado em modal (settlement + items) em vez de resetar o painel ou navegar para outra tela.
+  - **Bug de re-simulação ao trocar a moeda de liquidação**: `handleValuationDateChange`/`handleTargetCurrencyCodeChange` usavam `princingSimulation.results` (recebíveis já simulados com sucesso) como fonte da seleção atual. Como `usePricingSimulation.simulate` valida a moeda antes de gravar qualquer coisa em `results`, um recebível selecionado sem moeda escolhida nunca entrava em `results`; ao escolher a moeda depois, `simulatedIds` ficava vazio e nada era re-simulado. Corrigido rastreando a seleção real do checkbox (`selectedReceivableIds`) no `OperatorPanel`, reportada pelo `ReceivableList` via novo prop `onSelectionChange` (efeito disparado sempre que `selected` muda), em vez de derivar a seleção de `results`.
+- **Analise critica**:
+  - **Onde economizou tempo**: reaproveitamento direto dos padrões já validados na feature anterior (hook com validação e toast, `DataTable` com `body` customizado, `Dialog` no estilo do `FormDialogContainer`) permitiu montar o fluxo completo (botão, confirmação, execução, modal de resultado) sem retrabalho de arquitetura.
+  - **Onde exigiu atenção humana**: o bug de re-simulação só foi percebido em teste manual (seleção antes de escolher a moeda); a causa (validação abortando antes de popular `results`, que era usado como fonte de seleção) não era óbvia a partir do sintoma relatado, exigindo rastrear o fluxo completo de `handleSelectionChange` -> `onSimulate` -> `simulate` -> `results` para identificar onde a informação de "selecionado" se perdia.
+- **Contexto & Decisao**:
+  - **Arquitetura & Convenções**:
+    - Estrutura por contexto (`services/settlement`, `hooks/settlement`, `components/settlement`), espelhando o padrão de `receivable` e `pricing`.
+    - `settlement.service.ts` com `toPayload` convertendo `valuationDate` para `yyyy-MM-dd`, mesmo padrão do `receivable.service.ts`.
+    - `useSettlements.execute(assignorId, receivableIds, valuationDate, targetCurrencyCode)` recebe primitivos e monta o `SettlementRequest` internamente, com validação e toast inline, no mesmo estilo de `usePricingSimulation.simulate`.
+    - `ReceivableList` passou a expor a seleção atual ao componente pai via `onSelectionChange`, tornando `selected` a única fonte de verdade sobre "o que está marcado", em vez de o pai inferir isso a partir dos resultados de simulação.
+  - **Fluxo & Regras de Negocio**:
+    - Apenas recebíveis com simulação válida (`simulation !== null`) entram no `receivableIds` enviado para liquidar; um item com erro de simulação fica visível na tela, mas não é liquidado.
+    - Confirmação obrigatória (`ConfirmDialog`) antes de executar, por ser uma ação irreversível que marca os títulos como `SETTLED`.
+    - Após liquidar com sucesso: cedente permanece selecionado, a lista de recebíveis é recarregada (os liquidados somem da lista de abertos, o que também poda a seleção do `ReceivableList` automaticamente) e os resultados de simulação em lote são descartados.
+    - Trocar Data de Referência ou Moeda de Liquidação agora refaz a simulação de toda a seleção atual do checkbox, não apenas dos itens que já tinham simulação bem sucedida.
+    - `SettlementActions`: botão de liquidação, só renderizado quando há ao menos um recebível simulado com sucesso, com o total selecionado no próprio label do botão.
+  - **Componentes & UX**:
+    - `SettlementResultDialog`: modal com totais consolidados na moeda alvo e tabela de itens (valor de face, prazo, taxa total, deságio, valor presente e câmbio na moeda original; valor liquidado na moeda de liquidação).
