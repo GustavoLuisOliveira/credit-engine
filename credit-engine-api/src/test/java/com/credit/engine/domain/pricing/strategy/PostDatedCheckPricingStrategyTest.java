@@ -1,8 +1,8 @@
-package com.credit.engine.domain.princing.strategy;
+package com.credit.engine.domain.pricing.strategy;
 
 import com.credit.engine.domain.model.receivable.Receivable;
 import com.credit.engine.domain.model.receivable.ReceivableType;
-import com.credit.engine.domain.princing.PricingResult;
+import com.credit.engine.domain.pricing.PricingResult;
 import com.credit.engine.domain.shared.money.Money;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

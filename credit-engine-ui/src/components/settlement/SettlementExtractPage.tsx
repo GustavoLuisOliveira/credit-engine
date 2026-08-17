@@ -37,20 +37,20 @@ export const SettlementExtractPage: React.FC = () => {
             </Card>
 
             <Card>
-                {extract.page.content.length === 0 && !extract.loading ? (
+                {extract.page?.content?.length === 0 && !extract.loading ? (
                     <EmptyState message="Nenhuma liquidação encontrada para os filtros informados." />
                 ) : (
                     <DataTable
-                        value={extract.page.content}
+                        value={extract.page?.content}
                         loading={extract.loading}
                         dataKey="id"
                         stripedRows
                         rowClassName={() => 'text-sm'}
                         lazy
                         paginator
-                        first={extract.page.number * extract.pageSize}
+                        first={extract.page?.number * extract.pageSize}
                         rows={extract.pageSize}
-                        totalRecords={extract.page.totalElements}
+                        totalRecords={extract.page?.totalElements}
                         onPage={handlePageChange}
                     >
                         <Column header="Cedente" body={(row: SettlementExtractResponse) => `${row.assignorName} - ${row.assignorDocumentNumber}`} />

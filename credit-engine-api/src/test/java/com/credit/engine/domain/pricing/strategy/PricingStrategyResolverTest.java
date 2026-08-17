@@ -1,4 +1,4 @@
-package com.credit.engine.domain.princing.strategy;
+package com.credit.engine.domain.pricing.strategy;
 
 import com.credit.engine.domain.model.receivable.ReceivableType;
 import org.junit.jupiter.api.DisplayName;

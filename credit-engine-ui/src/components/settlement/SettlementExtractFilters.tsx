@@ -19,8 +19,8 @@ interface Props {
 export const SettlementExtractFilters: React.FC<Props> = ({ assignors, currencies, loading, onFilter }) => {
     const [filter, setFilter] = useState<SettlementExtractFilter>(emptySettlementExtractFilter);
 
-    const assignorOptions: SelectOption[] = assignors.map(a => ({ label: `${a.name} - ${a.documentNumber}`, value: a.id }));
-    const currencyOptions: SelectOption[] = currencies.map(c => ({ label: `${c.code} - ${c.name}`, value: c.code }));
+    const assignorOptions: SelectOption[] = assignors?.map(a => ({ label: `${a.name} - ${a.documentNumber}`, value: a.id })) ?? [];
+    const currencyOptions: SelectOption[] = currencies?.map(c => ({ label: `${c.code} - ${c.name}`, value: c.code })) ?? [];
 
     const handleClear = () => {
         setFilter(emptySettlementExtractFilter);
